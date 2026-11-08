@@ -111,7 +111,7 @@ describe('T1 form', () => {
 });
 
 describe('T2 vue', () => {
-  it.each(SAISIES)('%s : ni NaN ni souligne visible', (_n, s) => {
+  it.each(SAISIES)('%s : ni NaN ni souligne visible', (_n: string, s: Saisie) => {
     const { calcul, r } = calculer(s);
     const html = verdictsHtml(r) + voletsHtml(r);
     expect(html).not.toMatch(/NaN|Infinity|undefined/);
@@ -163,7 +163,7 @@ describe('T2 vue', () => {
 describe('T3 dessin et note', () => {
   const compte = (svg: string, c: string): number => (svg.match(new RegExp(`class="${c}[ "]`, 'g')) ?? []).length;
   const opt = { cotes: true, bloc: true, planNeutre: true };
-  it.each(SAISIES)('%s : SVG sans NaN', (_n, s) => {
+  it.each(SAISIES)('%s : SVG sans NaN', (_n: string, s: Saisie) => {
     const { calcul, r } = calculer(s);
     const svg = coupe(calcul, r, opt);
     expect(svg).toMatch(/^<svg /);
@@ -191,7 +191,7 @@ describe('T3 dessin et note', () => {
     const m = /class="pieu"[^>]*?width="([\d.]+)"[^>]*?height="([\d.]+)"/.exec(coupe(calcul, r, opt))!;
     expect(Number(m[2]) / Number(m[1])).toBeCloseTo(14 / 0.6, 0);
   });
-  it.each(SAISIES)('%s : note complete, sans verdict global', (_n, s) => {
+  it.each(SAISIES)('%s : note complete, sans verdict global', (_n: string, s: Saisie) => {
     const { calcul, r } = calculer(s);
     const n = noteDuCalcul(calcul, r, { projet: 'P', element: '', date: '2026-11-08' });
     expect(n.cartouche.outil).toBe('pieux');
@@ -238,7 +238,7 @@ describe('T4 anglais', () => {
     expect(contenuBalise(en, 'h1')).toBe('Piles');
     expect(constatsAffichage(texteVisible(en), { langue: 'en' })).toEqual([]);
   });
-  it.each(SAISIES)('%s : rien de francais dans le rendu', (_n, s) => {
+  it.each(SAISIES)('%s : rien de francais dans le rendu', (_n: string, s: Saisie) => {
     definirLangue('en');
     const { calcul, r } = calculer(s);
     const t = texteVisible(verdictsHtml(r) + voletsHtml(r) + coupe(calcul, r, { cotes: true, bloc: true, planNeutre: true }));

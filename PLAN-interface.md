@@ -36,7 +36,7 @@ L'interface ne calcule rien : le rendement vient de `rendementConverseLabarre` d
 | T3 | `dessin.ts`, fin de `style.css` | `T3` | la maquette, `sol-renforce/app/src/dessin.ts` lignes 1 à 60 |
 | T4 | `en/index.html`, `textes.ts` (EN, `phrase`) | `T4` | `sol-renforce/app/en/index.html` |
 
-Banc : `lancer.mjs . interface.test` puis `typecheck.mjs .`. Le filtre `T1`... se lit dans le nom des `describe`.
+Banc : `lancer.mjs . interface.test` puis `typecheck.mjs .` ; le fichier ne se charge pas avant T1. Une tâche est finie quand son `describe` (T1, T2...) passe ; les suivants peuvent encore échouer.
 
 ## Interdits pour l'exécutant
 
