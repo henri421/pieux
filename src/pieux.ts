@@ -381,6 +381,12 @@ function combis1re(d: DonneesPieux, n: Norme1re, nProfils: number, nPieux: numbe
   });
 }
 
+/** Rendement de Converse-Labarre (empirique, hors Eurocode), propose a l'utilisateur. */
+export function rendementConverseLabarre(D: number, s: number, nx: number, ny: number): number {
+  const theta = (Math.atan(D / s) * 180) / Math.PI;
+  return 1 - (theta / 90) * (((nx - 1) * ny + (ny - 1) * nx) / (nx * ny));
+}
+
 export function verifierPieux(d: DonneesPieux): ResultatPieux {
   const nProfils = valider(d);
   const { D } = d.pieu;

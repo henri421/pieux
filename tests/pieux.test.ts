@@ -1,7 +1,7 @@
 // Tests d'acceptation du noyau pieux (PLAN.md). Attendus calcules a part (script Python
 // independant, sans le code de l'outil). A ne pas modifier.
 import { describe, expect, it } from 'vitest';
-import { verifierPieux, type DonneesPieux, type Norme } from '../src/pieux';
+import { rendementConverseLabarre, verifierPieux, type DonneesPieux, type Norme } from '../src/pieux';
 
 const proche = (x: number, attendu: number, rel = 0.0005) =>
   expect(Math.abs(x - attendu) / Math.abs(attendu)).toBeLessThanOrEqual(rel);
@@ -151,6 +151,12 @@ describe('1re generation', () => {
     expect(() => verifierPieux(d)).toThrow(/vissé/);
     d.pieu.execution = 'non-classe';
     expect(() => verifierPieux(d)).toThrow(/classé/);
+  });
+});
+
+describe('rendement', () => {
+  it('Converse-Labarre', () => {
+    proche(rendementConverseLabarre(0.6, 1.8, 3, 2), 0.76103);
   });
 });
 
