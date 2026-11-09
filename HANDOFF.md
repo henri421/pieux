@@ -13,3 +13,10 @@
 - **Décisions** : aucune consignée, limite de 30 tours atteinte.
 - **Points douteux** : un test appelait `expect.arrayContaining`, absent du banc local ; la séance Claude a réécrit cette assertion avec `toContain`, à portée identique.
 - **Statut des tests** (relancés par la séance Claude) : T1 et T2 passent, T3 et T4 échouent encore (normal). Typage : 0 erreur.
+
+## T3 interface
+
+- **Fichiers modifiés** : `app/src/dessin.ts` (coupe et vue en plan SVG), `app/src/textes.ts` (section `dessin` en FR et EN), `app/src/style.css` (styles du dessin), `HANDOFF.md`.
+- **Décisions** : coupe à une seule échelle (24 px/m), vue en plan à droite à 42 px/m ; un `pieu` par file x ; un `plan-pieu` par pieu ; `charge-max` sur la file au `Nd` maximal de la combinaison au plus fort `tauxCompression` ; `zone-drag` par file et par couche où `tauDd > 0` ; plan neutre à la base de la dernière couche qui tasse ; aucun calcul de résistance, uniquement des coordonnées.
+- **Points douteux** : aucun sur T3. Les 9 échecs restants sont tous dans le groupe T4 anglais (traductions), hors périmètre de cette tâche.
+- **Statut des tests** : `lancer.mjs . interface.test` → groupe « T3 dessin et note » passe (45 réussis, 9 échecs, tous en T4 anglais). `typecheck.mjs .` → 0 erreur.

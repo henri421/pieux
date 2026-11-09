@@ -75,6 +75,20 @@ const FR = {
       `Pieu isolé ${isole} mm, semelle équivalente ${semelle} mm.`,
     tassementIsole: (isole: string) => `Pieu isolé ${isole} mm.`,
   },
+  dessin: {
+    aria: 'Coupe et vue en plan du groupe de pieux',
+    vuePlan: 'Vue en plan',
+    planNeutre: (d: string) => `plan neutre · ${d} m`,
+    longueur: (l: string) => `L = ${l} m`,
+    entraxe: (s: string) => `entraxe ${s} m`,
+    diametre: (d: string) => `D = ${d} m`,
+    bloc: (a: string, b: string) => `bloc ${a} × ${b} m`,
+    chargesMax: 'pieux les plus chargés',
+    charge: (vg: string, vq: string, mg: string, mq: string) =>
+      `V_G = ${vg} kN · V_Q = ${vq} kN ; M_G = ${mg} kN·m ; M_Q = ${mq} kN·m`,
+    coucheQ: (qs: string) => `q_s = ${qs} kPa`,
+    coucheTau: (t: string) => `τ_dd = ${t} kPa`,
+  },
   entrees: {
     geometrie: 'Géométrie',
     materiaux: 'Matériaux',
@@ -193,6 +207,20 @@ const EN: Textes = {
     tassementSemelle: (isole: string, semelle: string) =>
       `Single pile ${isole} mm, equivalent footing ${semelle} mm.`,
     tassementIsole: (isole: string) => `Single pile ${isole} mm.`,
+  },
+  dessin: {
+    aria: 'Pile group section and plan view',
+    vuePlan: 'Plan view',
+    planNeutre: (d: string) => `neutral plane · ${d} m`,
+    longueur: (l: string) => `L = ${l} m`,
+    entraxe: (s: string) => `spacing ${s} m`,
+    diametre: (d: string) => `D = ${d} m`,
+    bloc: (a: string, b: string) => `block ${a} × ${b} m`,
+    chargesMax: 'most loaded piles',
+    charge: (vg: string, vq: string, mg: string, mq: string) =>
+      `V_G = ${vg} kN · V_Q = ${vq} kN; M_G = ${mg} kN·m; M_Q = ${mq} kN·m`,
+    coucheQ: (qs: string) => `q_s = ${qs} kPa`,
+    coucheTau: (t: string) => `τ_dd = ${t} kPa`,
   },
   entrees: {
     geometrie: 'Geometry',

@@ -694,3 +694,91 @@ svg .titre-coupe { fill: #a52121; font-size: 12px; font-weight: 600; font-family
 .feuilles:empty {
   display: none;
 }
+
+/* ---- Dessin : coupe et vue en plan (T3) ---- */
+.dessin {
+  border: 1px solid var(--bordure);
+  border-radius: 0 0 var(--rayon) var(--rayon);
+  background: var(--surface);
+}
+.dessin svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.dessin svg text {
+  font-family: var(--sans);
+}
+svg .couche {
+  stroke: var(--bordure);
+  stroke-width: 1;
+}
+svg .couche-0 { fill: #efe9dc; }
+svg .couche-1 { fill: #e3e0d6; }
+svg .couche-2 { fill: #f3ecd0; }
+svg .terrain {
+  stroke: var(--texte);
+  stroke-width: 1.5;
+}
+svg .semelle,
+svg .pieu {
+  fill: var(--beton);
+  stroke: var(--texte);
+  stroke-width: 1.2;
+}
+svg .zone-drag {
+  fill: var(--traction);
+  fill-opacity: 0.35;
+  stroke: none;
+}
+svg .plan-neutre {
+  stroke: var(--traction);
+  stroke-width: 1;
+  stroke-dasharray: 5 3;
+}
+svg .bloc {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 6 4;
+}
+svg .charge {
+  stroke: var(--compression);
+  stroke-width: 2.5;
+}
+svg .plan-pieu {
+  fill: var(--beton);
+  stroke: var(--texte);
+  stroke-width: 1.3;
+}
+svg .plan-pieu.charge-max {
+  fill: var(--alerte-fond);
+  stroke: var(--alerte);
+}
+svg .cote {
+  stroke: var(--texte-faible);
+  stroke-width: 0.8;
+  fill: var(--texte-faible);
+  font-size: 11px;
+  font-family: var(--sans);
+}
+svg text.cote {
+  stroke: none;
+}
+svg .texte-coupe {
+  fill: var(--texte-doux);
+  font-size: 11px;
+  font-family: var(--sans);
+}
+.legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 1.2rem;
+  font-size: 0.8rem;
+  color: var(--texte-doux);
+  padding: 0.35rem 0.6rem;
+  border-top: 1px solid var(--bordure-douce);
+}
+.legende b {
+  font-weight: 600;
+}
