@@ -250,7 +250,7 @@ export const voletsHtml = (r: Resultat): string => {
       `<span>${echapper(d.resultats.taux)} ${taux(f.taux)}</span></div>`,
     ).join('');
     coefficients = c.coefficients.map((k) =>
-      `<div class="coefficient"><span>${texte(k.nom)} =${aff(k.valeur, 3)}</span>` +
+      `<div class="coefficient"><span>${texte(k.nom)} = ${aff(k.valeur, 3)}</span>` +
       `<span class="source">${texte(k.source)}</span></div>`,
     ).join('');
   }
@@ -273,22 +273,24 @@ export const voletsHtml = (r: Resultat): string => {
 
 export const couchesHtml = (s: Saisie): string => {
   const d = textes();
+  const champ = (libelle: string, entree: string): string => `<label><span>${libelle}</span>${entree}</label>`;
+  const decimal = (attributs: string, valeur: string): string =>
+    `<input type="text" inputmode="decimal" ${attributs} value="${brut(valeur)}">`;
   const couches = s.couches.map((couche, i) => {
-    const pointes = s.qb.map((_, p) =>
-      `<label>P${p + 1} ${sym('q_s')} <input type="text" inputmode="decimal" data-qs="${i}:${p}" value="${brut(couche.qs[p])}"></label>`,
+    const valeurs = s.qb.map((_, p) =>
+      champ(`P${p + 1}`, decimal(`data-qs="${i}:${p}"`, couche.qs[p])),
     ).join('');
-    return `<fieldset class="couche"><legend>Couche ${i + 1}</legend>` +
-      `<label>Nom <input type="text" data-couche="${i}" data-champ="nom" value="${echapper(couche.nom)}"></label>` +
-      `<label>${echapper(d.refus.champs.h)} <input type="text" inputmode="decimal" data-couche="${i}" data-champ="h" value="${brut(couche.h)}"></label>` +
-      `<label>${sym('τ_dd')} <input type="text" inputmode="decimal" data-couche="${i}" data-champ="tauDd" value="${brut(couche.tauDd)}"></label>` +
-      `<label>${echapper(d.refus.champs.qs)} ${pointes}</label>` +
+    return `<fieldset class="couche"><legend>${echapper(d.resultats.couche)} ${i + 1}</legend>` +
+      champ(echapper(d.resultats.nom), `<input type="text" data-couche="${i}" data-champ="nom" value="${echapper(couche.nom)}">`) +
+      champ(echapper(d.refus.champs.h), decimal(`data-couche="${i}" data-champ="h"`, couche.h)) +
+      champ(sym('τ_dd'), decimal(`data-couche="${i}" data-champ="tauDd"`, couche.tauDd)) +
+      `<div class="ligne-profils"><span>${sym('q_s')}</span><div class="profils-saisie">${valeurs}</div></div>` +
       `<button type="button" data-action="retirer-couche" data-couche="${i}">−</button>` +
       `</fieldset>`;
   }).join('');
 
-  const pointes = s.qb.map((qb, p) =>
-    `<label>P${p + 1} ${sym('q_b')} <input type="text" inputmode="decimal" data-qb="${p}" value="${brut(qb)}"></label>`,
-  ).join('');
+  const pointes = `<div class="ligne-profils"><span>${sym('q_b')}</span><div class="profils-saisie">` +
+    s.qb.map((qb, p) => champ(`P${p + 1}`, decimal(`data-qb="${p}"`, qb))).join('') + `</div></div>`;
 
   return `<div class="couches">${couches}</div><div class="pointes">${pointes}</div>`;
 };

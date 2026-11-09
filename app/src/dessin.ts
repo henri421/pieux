@@ -88,13 +88,15 @@ export function coupe(c: Calcul, r: Resultat, o: OptionsCoupe): string {
 
   const groupeL = (nx - 1) * s;
   const largeurSol = Math.max(groupeL + 2 * s, 3 * D, 2.4);
-  const coupeL = largeurSol * SCALE;
+  // Bande de sol prolongée à gauche : les libellés des couches ne passent pas sous les pieux.
+  const MARGE_LIBELLES = 130;
+  const coupeL = largeurSol * SCALE + MARGE_LIBELLES;
   const planL = largeurSol * PLAN;
 
   const yTop = PAD.haut + 40 + H_SEMELLE * SCALE;
   const yPointe = yTop + L * SCALE;
   const yBas = yTop + profondeur * SCALE;
-  const centre = PAD.gauche + coupeL / 2;
+  const centre = PAD.gauche + MARGE_LIBELLES + (largeurSol * SCALE) / 2;
   const planCentre = PAD.gauche + coupeL + GAP + planL / 2;
   const planY = (yTop + yPointe) / 2;
   const planHaut = planY - ((ny - 1) / 2) * s * PLAN - (D / 2) * PLAN;
