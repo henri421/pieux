@@ -52,7 +52,7 @@ function rendreCarte(c: Carte): string {
   const badge = c.estGouvernant ? ` <span class="badge">${textes().vue.gouvernant}</span>` : '';
   const barre = c.controle === null ? '' : `${jauge(c.controle)}<span class="taux">${taux(c.controle)}</span>`;
   return `<div class="${classes.join(' ')}" data-groupe="${c.groupe}" data-verification="${c.verification}">` +
-    `<h3>${c.titre}${badge}</h3>${barre}<p>${c.corps}</p></div>`;
+    `<h3>${c.titre}${badge}</h3>${barre}<p>${c.controle !== null && c.controle > 1 ? c.corps.replace('≤', '&gt;') : c.corps}</p></div>`;
 }
 
 const ligne = (symbole: string, libelle: string, valeur: string): LigneResultat => ({ symbole, libelle, valeur });
@@ -101,13 +101,14 @@ export const blocsResultat = (r: Resultat): BlocResultat[] => {
   const c = pire(r.combinaisons, (x) =>
     Math.max(x.tauxCompression, x.tauxTraction, x.groupe?.taux ?? 0));
   if (c === undefined) return [];
+  const l = textes().resultats;
   const blocs: BlocResultat[] = [
     {
       titre: `${v.compression} · ${c.nom}`,
       note: null,
       lignes: [
-        ligne('F_cd', 'Effort', `${aff(c.Fcd, 1)} kN`),
-        ligne('R_cd', 'Resistance', `${aff(c.Rcd, 1)} kN`),
+        ligne('F_cd', l.effort, `${aff(c.Fcd, 1)} kN`),
+        ligne('R_cd', l.resistance, `${aff(c.Rcd, 1)} kN`),
         ligne('taux', textes().resultats.taux, taux(c.tauxCompression)),
       ],
     },
@@ -115,8 +116,8 @@ export const blocsResultat = (r: Resultat): BlocResultat[] => {
       titre: `${v.traction} · ${c.nom}`,
       note: null,
       lignes: c.Nmin >= 0
-        ? [ligne('N_min', 'Effort minimal', `${aff(c.Nmin, 1)} kN`), ligne('R_td', 'Pour memoire', `${aff(c.Rtd, 1)} kN`)]
-        : [ligne('F_td', 'Effort', `${aff(c.Ftd, 1)} kN`), ligne('R_td', 'Resistance', `${aff(c.Rtd, 1)} kN`),
+        ? [ligne('N_min', l.effortMin, `${aff(c.Nmin, 1)} kN`), ligne('R_td', l.pourMemoire, `${aff(c.Rtd, 1)} kN`)]
+        : [ligne('F_td', l.effort, `${aff(c.Ftd, 1)} kN`), ligne('R_td', l.resistance, `${aff(c.Rtd, 1)} kN`),
           ligne('taux', textes().resultats.taux, taux(c.tauxTraction))],
     },
   ];
@@ -125,8 +126,8 @@ export const blocsResultat = (r: Resultat): BlocResultat[] => {
       titre: `${v.groupe} · ${c.nom}`,
       note: null,
       lignes: [
-        ligne('F_d', 'Effort', `${aff(c.groupe.Fd, 1)} kN`),
-        ligne('R_group,d', 'Resistance', `${aff(c.groupe.Rd, 1)} kN`),
+        ligne('F_d', l.effort, `${aff(c.groupe.Fd, 1)} kN`),
+        ligne('R_group,d', l.resistance, `${aff(c.groupe.Rd, 1)} kN`),
         ligne('taux', textes().resultats.taux, taux(c.groupe.taux)),
       ],
     });
@@ -135,8 +136,8 @@ export const blocsResultat = (r: Resultat): BlocResultat[] => {
     titre: v.tassement,
     note: null,
     lignes: [
-      ligne('s', 'Tassement', `${aff(r.tassement.s, 2)} mm`),
-      ligne('s_adm', 'Admissible', `${aff(r.tassement.sAdm, 1)} mm`),
+      ligne('s', l.tassement, `${aff(r.tassement.s, 2)} mm`),
+      ligne('s_adm', l.admissible, `${aff(r.tassement.sAdm, 1)} mm`),
       ligne('taux', textes().resultats.taux, taux(r.tassement.taux)),
     ],
   });
@@ -249,8 +250,8 @@ export const voletsHtml = (r: Resultat): string => {
       `<span>${echapper(d.resultats.taux)} ${taux(f.taux)}</span></div>`,
     ).join('');
     coefficients = c.coefficients.map((k) =>
-      `<div class="coefficient"><span>${sym(k.nom)} = ${aff(k.valeur, 3)}</span>` +
-      `<span class="source">${notationHtml(echapper(k.source))}</span></div>`,
+      `<div class="coefficient"><span>${texte(k.nom)} =${aff(k.valeur, 3)}</span>` +
+      `<span class="source">${texte(k.source)}</span></div>`,
     ).join('');
   }
 

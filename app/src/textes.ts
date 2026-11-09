@@ -85,9 +85,9 @@ const FR = {
     bloc: (a: string, b: string) => `bloc ${a} × ${b} m`,
     chargesMax: 'pieux les plus chargés',
     charge: (vg: string, vq: string, mg: string, mq: string) =>
-      `V_G = ${vg} kN · V_Q = ${vq} kN ; M_G = ${mg} kN·m ; M_Q = ${mq} kN·m`,
-    coucheQ: (qs: string) => `q_s = ${qs} kPa`,
-    coucheTau: (t: string) => `τ_dd = ${t} kPa`,
+      `VG = ${vg} kN · VQ = ${vq} kN ; MG = ${mg} kN·m ; MQ = ${mq} kN·m`,
+    coucheQ: (qs: string) => `qs = ${qs} kPa`,
+    coucheTau: (t: string) => `τdd = ${t} kPa`,
   },
   entrees: {
     geometrie: 'Géométrie',
@@ -111,6 +111,12 @@ const FR = {
     coefficients: 'Coefficients et sources',
     hypotheses: 'Hypothèses',
     taux: 'Taux',
+    effort: 'Effort',
+    resistance: 'Résistance',
+    effortMin: 'Effort minimal',
+    pourMemoire: 'Pour mémoire',
+    tassement: 'Tassement',
+    admissible: 'Admissible',
     colonneX: 'x',
   },
   verifications: {
@@ -218,9 +224,9 @@ const EN: Textes = {
     bloc: (a: string, b: string) => `block ${a} × ${b} m`,
     chargesMax: 'most loaded piles',
     charge: (vg: string, vq: string, mg: string, mq: string) =>
-      `V_G = ${vg} kN · V_Q = ${vq} kN; M_G = ${mg} kN·m; M_Q = ${mq} kN·m`,
-    coucheQ: (qs: string) => `q_s = ${qs} kPa`,
-    coucheTau: (t: string) => `τ_dd = ${t} kPa`,
+      `VG = ${vg} kN · VQ = ${vq} kN; MG = ${mg} kN·m; MQ = ${mq} kN·m`,
+    coucheQ: (qs: string) => `qs = ${qs} kPa`,
+    coucheTau: (t: string) => `τdd = ${t} kPa`,
   },
   entrees: {
     geometrie: 'Geometry',
@@ -244,6 +250,12 @@ const EN: Textes = {
     coefficients: 'Factors and sources',
     hypotheses: 'Assumptions',
     taux: 'Ratio',
+    effort: 'Force',
+    resistance: 'Resistance',
+    effortMin: 'Minimum force',
+    pourMemoire: 'For information',
+    tassement: 'Settlement',
+    admissible: 'Allowable',
     colonneX: 'x',
   },
   verifications: {
@@ -286,6 +298,144 @@ export function ponctuer(s: string): string {
 }
 
 /** Phrases du noyau (refus, alertes, sources) traduites en anglais : regles ajoutees en T4. */
-const EXACTES: Record<string, string> = {};
-const REGLES: [RegExp, (_m: string, ...g: string[]) => string][] = [];
-export const phrase = traducteur(EXACTES, REGLES);
+const NOMS_EN: Record<string, string> = {
+  'Diamètre D': 'Diameter D',
+  'Files selon x': 'Rows along x',
+  'Files selon y': 'Rows along y',
+  'Entraxe s': 'Spacing s',
+  'Rendement η': 'Efficiency η',
+  'Rapport q_b,bloc / q_b': 'Ratio q_b,block / q_b',
+  'Épaisseur': 'Thickness',
+  'τ_dd': 'τ_dd',
+  'q_s': 'q_s',
+  'V_G': 'V_G',
+  'V_Q': 'V_Q',
+  'M_G': 'M_G',
+  'M_Q': 'M_Q',
+  'Module équivalent E_eq': 'Equivalent modulus E_eq',
+  'Coefficient de Poisson ν': 'Poisson ratio ν',
+  'Module du fût E_p': 'Shaft modulus E_p',
+  'Tassement admissible': 'Allowable settlement',
+  'Espacement moyen des profils': 'Average profile spacing',
+};
+
+function nomEn(nom: string): string {
+  return NOMS_EN[nom] ?? nom.replace(/^q_b du profil P(\d+)$/, 'q_b of profile P$1');
+}
+
+const EXACTES: Record<string, string> = {
+  'γ_G (frottement négatif)': 'γ_G (downdrag)',
+  'Un seul profil : les facteurs de corrélation les plus défavorables s’appliquent.':
+    'Single profile: the most unfavourable correlation factors apply.',
+  'Entraxe inférieur à 3 D : effets de groupe importants.':
+    'Spacing less than 3 D: significant group effects.',
+  'La pointe est dans une couche qui tasse.':
+    'The base is in a settling layer.',
+  'Tassement du groupe : estimation simple ; le 6.7 demande un modèle d’interaction non linéaire.':
+    'Group settlement: simple estimate; 6.7 requires a non-linear interaction model.',
+  'ξ_min gouverne avec moins de 5 profils et un CoV d’au moins 30 % : condition de 6.6.2.4.2 non remplie.':
+    'ξ_min governs with fewer than 5 profiles and a CoV of at least 30 %: condition of 6.6.2.4.2 not met.',
+  'Au moins une couche est requise.': 'At least one layer is required.',
+  'Au moins un profil est requis.': 'At least one profile is required.',
+  'Un moment autour de y demande au moins deux files selon x.':
+    'A moment about y requires at least two rows along x.',
+  'Le modèle de terrain porte sur un seul profil de calcul.':
+    'The ground model applies to a single calculation profile.',
+  'Pieu non classé : les tableaux de la 1re génération ne le couvrent pas.':
+    'Unclassified pile: the 1st-generation tables do not cover it.',
+  'Pieu vissé : les tableaux recommandés A.6 à A.8 ne le couvrent pas (profil ANB requis).':
+    'Screw pile: the recommended tables A.6 to A.8 do not cover it (ANB profile required).',
+  'Aucune résistance sur au moins un profil : q_b et q_s y sont tous nuls.':
+    'No resistance on at least one profile: q_b and q_s are both zero there.',
+  'Bloc : périmètre × Σ(q_s·h) + aire × q_b,bloc, avec les mêmes facteurs de corrélation que le pieu (choix de l’outil).':
+    'Block: perimeter × Σ(q_s·h) + area × q_b,block, with the same correlation factors as the pile (choice of this tool).',
+  'EN 1990:2023, tableau A.1.8, valeur recommandée × k_F, EN 1990:2023, tableau A.1.9, valeur recommandée':
+    'EN 1990:2023, Table A.1.8, recommended value × k_F, EN 1990:2023, Table A.1.9, recommended value',
+  'EN 1990:2023, tableau A.1.8, valeur recommandée':
+    'EN 1990:2023, Table A.1.8, recommended value',
+  'EN 1997-1:2004, tableau A.10, valeur recommandée':
+    'EN 1997-1:2004, Table A.10, recommended value',
+  'EN 1997-1:2004, tableau A.3, valeur recommandée, jeu A1':
+    'EN 1997-1:2004, Table A.3, recommended value, set A1',
+  'EN 1997-1:2004, tableau A.3, valeur recommandée, jeu A2':
+    'EN 1997-1:2004, Table A.3, recommended value, set A2',
+  'EN 1997-1:2004, tableau A.7, jeu R1, valeur recommandée':
+    'EN 1997-1:2004, Table A.7, set R1, recommended value',
+  'EN 1997-1:2004, tableau A.7, jeu R3, valeur recommandée':
+    'EN 1997-1:2004, Table A.7, set R3, recommended value',
+  'EN 1997-1:2004, tableau A.7, jeu R4, valeur recommandée':
+    'EN 1997-1:2004, Table A.7, set R4, recommended value',
+  'EN 1997-3:2025, tableau 6.10': 'EN 1997-3:2025, Table 6.10',
+  'EN 1997-3:2025, tableau 6.10, classe replacement':
+    'EN 1997-3:2025, Table 6.10, replacement class',
+  'EN 1997-3:2025, tableau 6.12 ; γ_Rd,group = 1,0':
+    'EN 1997-3:2025, Table 6.12; γ_Rd,group = 1,0',
+  'EN 1997-3:2025, tableau 6.4': 'EN 1997-3:2025, Table 6.4',
+  'EN 1997-3:2025, tableau 6.6': 'EN 1997-3:2025, Table 6.6',
+  'NBN EN 1997-1 ANB:2022, tableau A.10 ANB':
+    'NBN EN 1997-1 ANB:2022, Table A.10 ANB',
+  'NBN EN 1997-1 ANB:2022, tableau A.3 ANB, jeu A1':
+    'NBN EN 1997-1 ANB:2022, Table A.3 ANB, set A1',
+  'NBN EN 1997-1 ANB:2022, tableau A.7 ANB, jeu R1':
+    'NBN EN 1997-1 ANB:2022, Table A.7 ANB, set R1',
+  'Le rendement η est saisi ; la formule de Converse-Labarre proposée est empirique et hors Eurocode.':
+    'The efficiency η is input; the Converse-Labarre formula offered is empirical and outside the Eurocode.',
+  'Les résistances unitaires q_b et q_s sont saisies : leur méthode d’obtention relève de l’ingénieur.':
+    'Unit resistances q_b and q_s are input: how they are obtained is the engineer’s responsibility.',
+  'Non traités : effort transversal, radier sur pieux, chargement cyclique, résistance structurale du fût.':
+    'Not covered: transverse load, piled raft, cyclic loading, structural resistance of the shaft.',
+  'Semelle rigide : N = V/n ± M·x/Σx².':
+    'Rigid cap: N = V/n ± M·x/Σx².',
+  'Tassement du pieu isolé : N·L/(E_p·A) + N·(1−ν²)/(E_eq·D), tout l’effort à la pointe. Groupe : semelle équivalente au contour du bloc, raccourcissement ajouté, maximum avec le pieu isolé. Combinaison caractéristique, frottement négatif non compté.':
+    'Single pile settlement: N·L/(E_p·A) + N·(1−ν²)/(E_eq·D), all load at the base. Group: equivalent footing on the block outline, shortening added, maximum with the single pile. Characteristic combination, downdrag not counted.',
+  'Une couche qui tasse (τ_dd > 0) ne compte pas dans le frottement positif ; D_rep = π·D·Σ(τ_dd·h).':
+    'A settling layer (τ_dd > 0) does not count in positive shaft friction; D_rep = π·D·Σ(τ_dd·h).',
+};
+
+const REGLES: [RegExp, (_m: string, ...g: string[]) => string][] = [
+  [
+    /^Tassement du groupe\s*:\s*estimation simple\s*;\s*le 6\.7 demande un modèle d[’'`]interaction non linéaire\.$/,
+    () => 'Group settlement: simple estimate; 6.7 requires a non-linear interaction model.',
+  ],
+  [
+    /^Aucun pieu tendu \(N_min = (.+) kN\)\. R_td = (.+) kN pour mémoire\.$/,
+    (_m, nMin, rtd) => `No pile in tension (N_min = ${nMin} kN). R_td = ${rtd} kN for information.`,
+  ],
+  [
+    /^Le rendement gouverne \(η·n·R = (.+) kN, R_bloc = (.+) kN\)\.$/,
+    (_m, somme, bloc) => `Efficiency governs (η·n·R = ${somme} kN, R_block = ${bloc} kN).`,
+  ],
+  [
+    /^Pieu isolé (.+) mm, semelle équivalente (.+) mm\.$/,
+    (_m, isole, semelle) => `Single pile ${isole} mm, equivalent footing ${semelle} mm.`,
+  ],
+  [
+    /^Pieu isolé (.+) mm\.$/,
+    (_m, isole) => `Single pile ${isole} mm.`,
+  ],
+  [
+    /^CoV de (.+) % : le tableau 6\.6 suppose un CoV d’au plus 12 %\.$/,
+    (_m, cov) => `CoV of ${cov} %: Table 6.6 assumes a CoV of at most 12 %.`,
+  ],
+  [
+    /^Rendement invalide : (.+) \(attendu dans \]0 ; 1\]\)\.$/,
+    (_m, v) => `Invalid efficiency: ${v} (expected within ]0; 1]).`,
+  ],
+  [/^ν invalide : (.+)\.$/, (_m, v) => `Invalid ν: ${v}.`],
+  [/^Densité de CPT inconnue : (.+)\.$/, (_m, v) => `Unknown CPT density: ${v}.`],
+  [
+    /^(.+) invalide : (.+) \(entier ≥ 1 attendu\)\.$/,
+    (_m, nom, v) => `Invalid ${nomEn(nom)}: ${v} (integer ≥ 1 expected).`,
+  ],
+  [
+    /^(.+) invalide : (.+) \(attendu (>|≥) (.+)\)\.$/,
+    (_m, nom, v, strict, min) => `Invalid ${nomEn(nom)}: ${v} (expected ${strict} ${min}).`,
+  ],
+  [
+    /^(.+) : (.+) valeurs de q_s pour (.+) profils\.$/,
+    (_m, nom, nValeurs, nProfils) =>
+      `${nomEn(nom)}: ${nValeurs} q_s values for ${nProfils} profiles.`,
+  ],
+];
+const traduire = traducteur(EXACTES, REGLES);
+export const phrase = traduire;

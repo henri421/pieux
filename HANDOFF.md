@@ -20,3 +20,9 @@
 - **Décisions** : coupe à une seule échelle (24 px/m), vue en plan à droite à 42 px/m ; un `pieu` par file x ; un `plan-pieu` par pieu ; `charge-max` sur la file au `Nd` maximal de la combinaison au plus fort `tauxCompression` ; `zone-drag` par file et par couche où `tauDd > 0` ; plan neutre à la base de la dernière couche qui tasse ; aucun calcul de résistance, uniquement des coordonnées.
 - **Points douteux** : aucun sur T3. Les 9 échecs restants sont tous dans le groupe T4 anglais (traductions), hors périmètre de cette tâche.
 - **Statut des tests** : `lancer.mjs . interface.test` → groupe « T3 dessin et note » passe (45 réussis, 9 échecs, tous en T4 anglais). `typecheck.mjs .` → 0 erreur.
+
+## T4 interface et audit
+
+- **Fichiers modifiés** : `app/en/index.html`, `app/src/textes.ts` (exécutant, limite de 30 tours atteinte) ; `app/src/vue.ts`, `app/src/textes.ts`, `app/index.html`, `app/en/index.html` (audit, séance Claude).
+- **Corrections d'audit** : balise `script` absente des deux pages (non couverte par les tests) ; signe `≤` affiché malgré un dépassement, remplacé par `>` ; sources et noms de coefficients non traduits ; libellés en dur dans `blocsResultat` ; indices bruts dans le dessin ; `console.log` de diagnostic retiré.
+- **Statut des tests** : `lancer.mjs .` : 78 réussis, 0 échec. `typecheck.mjs .` : 0 erreur. Contrôle à l'écran : FR, EN, dépassement, bascule 1re/2e génération.
