@@ -102,7 +102,16 @@ export const blocsResultat = (r: Resultat): BlocResultat[] => {
     Math.max(x.tauxCompression, x.tauxTraction, x.groupe?.taux ?? 0));
   if (c === undefined) return [];
   const l = textes().resultats;
+  const g = r.gouvernant;
   const blocs: BlocResultat[] = [
+    {
+      titre: l.synthese,
+      note: null,
+      lignes: [
+        ligne('taux', l.tauxGouvernant, taux(g.taux)),
+        ligne('gouvernant', l.verificationGouvernante, [v[g.verification], g.combinaison].filter((x) => x).join(', ')),
+      ],
+    },
     {
       titre: `${v.compression} · ${c.nom}`,
       note: null,

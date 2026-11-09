@@ -26,3 +26,9 @@
 - **Fichiers modifiés** : `app/en/index.html`, `app/src/textes.ts` (exécutant, limite de 30 tours atteinte) ; `app/src/vue.ts`, `app/src/textes.ts`, `app/index.html`, `app/en/index.html` (audit, séance Claude).
 - **Corrections d'audit** : balise `script` absente des deux pages (non couverte par les tests) ; signe `≤` affiché malgré un dépassement, remplacé par `>` ; sources et noms de coefficients non traduits ; libellés en dur dans `blocsResultat` ; indices bruts dans le dessin ; `console.log` de diagnostic retiré.
 - **Statut des tests** : `lancer.mjs .` : 78 réussis, 0 échec. `typecheck.mjs .` : 0 erreur. Contrôle à l'écran : FR, EN, dépassement, bascule 1re/2e génération.
+
+## Audit final
+
+- `blocsResultat` ne commençait pas par la synthèse attendue par `note.ts`, qui saute le premier bloc : la compression manquait à la note. Bloc de synthèse ajouté.
+- Mise en page des couches, des volets et des libellés de la coupe reprise après contrôle à l'écran.
+- `lancer.mjs .` : 78 réussis, 0 échec. `typecheck.mjs .` : 0 erreur. Note de calcul produite et contrôlée : les quatre vérifications y figurent.
