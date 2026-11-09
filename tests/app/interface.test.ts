@@ -144,7 +144,7 @@ describe('T2 vue', () => {
     const g = e.geometrie.map((l) => l.symbole);
     for (const x of ['D', 's', 'L']) expect(g).toContain(x);
     expect(e.materiaux.map((l) => l.symbole)).toContain('E_eq');
-    expect(e.charges.map((l) => l.symbole)).toEqual(expect.arrayContaining(['V_G', 'V_Q', 'M_G', 'M_Q']));
+    for (const x of ['V_G', 'V_Q', 'M_G', 'M_Q']) expect(e.charges.map((l) => l.symbole)).toContain(x);
     const tous = [...g, ...e.materiaux.map((l) => l.symbole), ...e.charges.map((l) => l.symbole), ...e.hypotheses.map((l) => l.symbole)];
     expect(new Set(tous).size).toBe(tous.length);
   });
