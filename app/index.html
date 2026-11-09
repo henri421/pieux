@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="./icone.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icone-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pieux — portance axiale, frottement négatif et tassement (EN 1997)</title>
+    <meta
+      name="description"
+      content="Vérification d’un pieu et d’un groupe sous semelle rigide selon l’Eurocode 7, dans ses deux générations : compression, traction, résistance du groupe et tassement simple."
+    />
+    <meta name="theme-color" content="#f7f7f6" />
+  </head>
+  <body>
+    <div class="barre">
+      <div class="barre-corps">
+        <span class="barre-nom">webaedificium</span>
+        <div class="barre-actions">
+          <a class="barre-lien" href="https://henri421.github.io/WebAedificium/" target="_blank" rel="noopener">Suite</a>
+          <a class="barre-langue" href="en/" lang="en" hreflang="en">EN</a>
+        </div>
+      </div>
+    </div>
+
+    <header>
+      <h1>Pieux</h1>
+      <p class="sous-titre">
+        Portance axiale d’un pieu et d’un groupe sous semelle rigide, frottement négatif et tassement simple
+        (EN 1997), en 1<sup>re</sup> ou 2<sup>e</sup> génération.
+      </p>
+      <p class="avertissement">
+        Non traités : effort transversal, radier sur pieux, chargement cyclique, méthodes CPT ou pressiométrique
+        (q<sub>b</sub> et q<sub>s</sub> sont saisis), résistance structurale du fût (à vérifier par ailleurs,
+        efforts rendus).
+      </p>
+    </header>
+
+    <main>
+      <section id="saisie" aria-label="Saisie">
+        <form id="formulaire" autocomplete="off" novalidate>
+          <p data-role="erreur" class="erreur" role="alert" hidden></p>
+
+          <fieldset>
+            <legend>Pieu</legend>
+            <label class="ligne">
+              <span>Mode d’exécution</span>
+              <select data-champ="execution">
+                <option value="fore">Foré</option>
+                <option value="battu">Battu ou foncé</option>
+                <option value="cfa">Tarière continue</option>
+                <option value="visse">Vissé à refoulement</option>
+                <option value="non-classe">Non classé</option>
+              </select>
+            </label>
+            <label class="ligne">
+              <span>Diamètre D (m)</span>
+              <input type="text" inputmode="decimal" data-champ="D" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Groupe sous semelle rigide</legend>
+            <label class="ligne">
+              <span>Files selon x</span>
+              <input type="text" inputmode="numeric" data-champ="nx" />
+            </label>
+            <label class="ligne">
+              <span>Files selon y</span>
+              <input type="text" inputmode="numeric" data-champ="ny" />
+            </label>
+            <label class="ligne">
+              <span>Entraxe s (m)</span>
+              <input type="text" inputmode="decimal" data-champ="s" />
+            </label>
+            <label class="ligne">
+              <span>Rendement η</span>
+              <input type="text" inputmode="decimal" data-champ="eta" />
+            </label>
+            <div class="boutons">
+              <button type="button" data-action="proposer-rendement">Proposer Converse-Labarre</button>
+            </div>
+            <p class="source">
+              η = 1 − (θ/90)·[(m−1)n + (n−1)m]/(mn), θ = arctan(D/s). Formule empirique, hors Eurocode.
+            </p>
+            <label class="ligne">
+              <span>Rapport q<sub>b,bloc</sub> / q<sub>b</sub></span>
+              <input type="text" inputmode="decimal" data-champ="ratioQbBloc" />
+            </label>
+            <label class="coche">
+              <input type="checkbox" data-champ="redistribution" />
+              Semelle capable de redistribuer (ξ réduits, sans descendre sous 1)
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Sol et résistances (kPa)</legend>
+            <div class="boutons">
+              <button type="button" data-action="ajouter-profil">+ profil</button>
+              <button type="button" data-action="retirer-profil">− profil</button>
+            </div>
+            <div data-role="couches"></div>
+            <div class="boutons">
+              <button type="button" data-action="ajouter-couche">+ couche</button>
+              <button type="button" data-action="retirer-couche">− couche</button>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Efforts sur la semelle</legend>
+            <label class="ligne">
+              <span>V<sub>G</sub> (kN)</span>
+              <input type="text" inputmode="decimal" data-champ="VG" />
+            </label>
+            <label class="ligne">
+              <span>V<sub>Q</sub> (kN)</span>
+              <input type="text" inputmode="decimal" data-champ="VQ" />
+            </label>
+            <label class="ligne">
+              <span>M<sub>G</sub> autour de y (kN·m)</span>
+              <input type="text" inputmode="decimal" data-champ="MG" />
+            </label>
+            <label class="ligne">
+              <span>M<sub>Q</sub> autour de y (kN·m)</span>
+              <input type="text" inputmode="decimal" data-champ="MQ" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Service</legend>
+            <label class="ligne">
+              <span>Module équivalent à la pointe E<sub>eq</sub> (MPa)</span>
+              <input type="text" inputmode="decimal" data-champ="Eeq" />
+            </label>
+            <label class="ligne">
+              <span>Coefficient de Poisson ν</span>
+              <input type="text" inputmode="decimal" data-champ="nu" />
+            </label>
+            <label class="ligne">
+              <span>Module du fût E<sub>p</sub> (GPa)</span>
+              <input type="text" inputmode="decimal" data-champ="Ep" />
+            </label>
+            <label class="ligne">
+              <span>Tassement admissible (mm)</span>
+              <input type="text" inputmode="decimal" data-champ="sAdm" />
+            </label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Génération d’Eurocode</legend>
+            <div class="boutons-generation">
+              <button type="button" data-generation="1re">1<sup>re</sup> (EN 1997-1:2004)</button>
+              <button type="button" data-generation="2e">2<sup>e</sup> (EN 1997-3:2025)</button>
+            </div>
+
+            <div data-groupe="1re">
+              <label class="ligne">
+                <span>Profil normatif</span>
+                <select data-champ="profilNormatif">
+                  <option value="recommande">Recommandé</option>
+                  <option value="anb2022">ANB 2022</option>
+                </select>
+              </label>
+              <div data-si-profil="recommande">
+                <label class="ligne">
+                  <span>Approche</span>
+                  <select data-champ="approche1">
+                    <option value="DA1">DA1</option>
+                    <option value="DA2">DA2</option>
+                    <option value="DA3">DA3</option>
+                  </select>
+                </label>
+              </div>
+              <div data-si-profil="anb2022">
+                <label class="ligne">
+                  <span>Risque</span>
+                  <select data-champ="risque">
+                    <option value="faible">Faible</option>
+                    <option value="normal">Normal</option>
+                    <option value="eleve">Élevé</option>
+                  </select>
+                </label>
+                <label class="ligne">
+                  <span>Densité de CPT</span>
+                  <select data-champ="densiteCpt">
+                    <option value="10">10</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="300">300</option>
+                    <option value="1000">1000</option>
+                  </select>
+                </label>
+                <label class="coche">
+                  <input type="checkbox" data-champ="rigide" />
+                  Semelle rigide
+                </label>
+                <label class="coche">
+                  <input type="checkbox" data-champ="sondageProche" />
+                  Sondage proche
+                </label>
+              </div>
+            </div>
+
+            <div data-groupe="2e">
+              <label class="ligne">
+                <span>Classe de conséquences</span>
+                <select data-champ="consequences">
+                  <option value="CC1">CC1</option>
+                  <option value="CC2">CC2</option>
+                  <option value="CC3">CC3</option>
+                </select>
+              </label>
+              <label class="ligne">
+                <span>Méthode</span>
+                <select data-champ="methode">
+                  <option value="modele-pieu">Modèle de pieu (profils)</option>
+                  <option value="modele-terrain">Modèle de terrain</option>
+                </select>
+              </label>
+              <div data-si-methode="modele-pieu">
+                <label class="ligne">
+                  <span>Base des profils</span>
+                  <select data-champ="base">
+                    <option value="sol">Propriétés du sol : 1,2</option>
+                    <option value="cpt">CPT : 1,1</option>
+                    <option value="pmt">Pressiomètre Ménard : 1,15 / 1,4</option>
+                  </select>
+                </label>
+                <label class="ligne">
+                  <span>Espacement moyen des profils (m)</span>
+                  <input type="text" inputmode="decimal" data-champ="dAvg" />
+                </label>
+              </div>
+              <div data-si-methode="modele-terrain">
+                <label class="ligne">
+                  <span>Base du modèle de terrain</span>
+                  <select data-champ="baseTerrain">
+                    <option value="essais-ultimes">Essais ultimes</option>
+                    <option value="etendue">Étendue</option>
+                    <option value="essais-service">Essais de service</option>
+                    <option value="limitee">Limitée</option>
+                  </select>
+                </label>
+              </div>
+              <label class="ligne">
+                <span>Résistance</span>
+                <select data-champ="resistance">
+                  <option value="separee">Pointe et fût séparés</option>
+                  <option value="totale">Totale</option>
+                </select>
+              </label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Cartouche</legend>
+            <label class="ligne">
+              <span>Projet</span>
+              <input type="text" data-role="projet" />
+            </label>
+            <label class="ligne">
+              <span>Élément</span>
+              <input type="text" data-role="element" />
+            </label>
+          </fieldset>
+        </form>
+      </section>
+
+      <section id="resultat" aria-label="Résultats">
+        <div class="sorties">
+          <b>Sorties</b>
+          <div class="boutons">
+            <button type="button" class="principal" data-action="exporter-note">Note de calcul</button>
+            <button type="button" data-action="exporter-coupe">Coupe (SVG)</button>
+            <button type="button" data-action="exporter-resultats">Résultats (CSV)</button>
+            <button type="button" data-action="enregistrer">Saisie (JSON)</button>
+            <button type="button" data-action="reinitialiser">Réinitialiser</button>
+            <label class="bouton-fichier">
+              Ouvrir…
+              <input type="file" accept="application/json,.json" data-role="ouvrir" hidden />
+            </label>
+          </div>
+          <p class="source">
+            La note commune de la suite : données, couches et profils, coefficients avec leurs sources, coupe et
+            plan, chaque vérification avec sa formule et son taux, alertes et hypothèses. Imprimable en PDF.
+          </p>
+        </div>
+
+        <div class="visuels" aria-label="Coupe">
+          <div class="outils">
+            <span class="titre">Coupe</span>
+            <label><input type="checkbox" data-option="cotes" checked /> cotes</label>
+            <label><input type="checkbox" data-option="bloc" checked /> bloc</label>
+            <label><input type="checkbox" data-option="planNeutre" checked /> plan neutre</label>
+          </div>
+          <div class="dessin" data-role="coupe"></div>
+        </div>
+
+        <div data-role="verdicts"></div>
+        <div data-role="volets"></div>
+      </section>
+    </main>
+  </body>
+</html>
