@@ -8,6 +8,7 @@ import type { Calcul, Resultat } from './form';
 import { coupe } from './dessin';
 import { phrase, ponctuer, textes } from './textes';
 import { blocsResultat, entreesParSection } from './vue';
+import { VERSION_OUTIL } from './version';
 
 const NORME_1RE = 'EN 1997-1:2004';
 const NORME_1RE_ANB = 'EN 1997-1:2004, NBN EN 1997-1 ANB:2022';
@@ -70,6 +71,7 @@ export function noteDuCalcul(calcul: Calcul, r: Resultat, cartouche: { projet: s
   const norme = calcul.donnees.norme;
   return {
     cartouche: {
+      version: VERSION_OUTIL,
       projet: cartouche.projet,
       element: cartouche.element.trim() === '' ? n.element : cartouche.element,
       date: cartouche.date,
