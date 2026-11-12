@@ -3,7 +3,7 @@
  * Ecrit par la seance de conception ; l'executant ne le modifie pas.
  */
 
-import { type ElementNote, type LigneResultat, type NoteDeCalcul, type VerificationNote, nombreAffiche, tauxAffiche } from 'aedificium-ui';
+import { avertissement2eGeneration, type ElementNote, type LigneResultat, type NoteDeCalcul, type VerificationNote, nombreAffiche, tauxAffiche } from 'aedificium-ui';
 import type { Calcul, Resultat } from './form';
 import { coupe } from './dessin';
 import { phrase, ponctuer, textes } from './textes';
@@ -90,6 +90,6 @@ export function noteDuCalcul(calcul: Calcul, r: Resultat, cartouche: { projet: s
       calculs: [...tableaux(r), ...detail.map((b): ElementNote => ({ type: 'bloc', bloc: b }))],
     },
     verifications: verificationsDe(r),
-    avertissements: r.alertes.map((a) => phrase(a)),
+    avertissements: [...(norme.generation === 2 ? [avertissement2eGeneration()] : []), ...r.alertes.map((a) => phrase(a))],
   };
 }
