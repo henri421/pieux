@@ -6,6 +6,7 @@
  * choix retenu sont lus. Aucun calcul ici : le noyau fait foi.
  */
 
+import { profilLu1g, sourceLuPieux } from './annexe';
 import { lireNombre, nombreAffiche } from 'aedificium-ui';
 import type { Approche, ClasseConsequences, Risque } from 'sol-ec7';
 import {
@@ -191,6 +192,7 @@ export function lireSaisie(s: Saisie): Lecture {
           generation: 1,
           profil: 'recommande',
           approche: choix(s.approche1, APPROCHES, 'DA1'),
+          ...(s.profilNormatif === 'lu' ? { annexe: { profil: profilLu1g(), source: sourceLuPieux } } : {}),
         };
       }
     } else {
@@ -362,7 +364,7 @@ export function relire(contenu: string): Saisie {
     ),
     resistance: choixOu(brut.resistance, ['separee', 'totale'] as const, d.resistance),
     dAvg: texteOu(brut.dAvg, d.dAvg),
-    profilNormatif: choixOu(brut.profilNormatif, ['recommande', 'anb2022'] as const, d.profilNormatif),
+    profilNormatif: choixOu(brut.profilNormatif, ['recommande', 'anb2022', 'lu'] as const, d.profilNormatif),
     approche1: choixOu(brut.approche1, ['DA1', 'DA2', 'DA3'] as const, d.approche1),
     risque: choixOu(brut.risque, ['faible', 'normal', 'eleve'] as const, d.risque),
     densiteCpt: choixOu(brut.densiteCpt, ['10', '50', '100', '300', '1000'] as const, d.densiteCpt),

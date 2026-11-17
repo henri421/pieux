@@ -3,7 +3,7 @@
  * Ecrit par la seance de conception ; l'executant ne le modifie pas.
  */
 
-import { avertissement2eGeneration, type ElementNote, type LigneResultat, type NoteDeCalcul, type VerificationNote, nombreAffiche, tauxAffiche } from 'aedificium-ui';
+import { avertissement2eGeneration, avertissementAnnexeLu, type ElementNote, type LigneResultat, type NoteDeCalcul, type VerificationNote, nombreAffiche, tauxAffiche } from 'aedificium-ui';
 import type { Calcul, Resultat } from './form';
 import { coupe } from './dessin';
 import { phrase, ponctuer, textes } from './textes';
@@ -12,6 +12,7 @@ import { VERSION_OUTIL } from './version';
 
 const NORME_1RE = 'EN 1997-1:2004';
 const NORME_1RE_ANB = 'EN 1997-1:2004, NBN EN 1997-1 ANB:2022';
+const NORME_1RE_LU = 'EN 1997-1:2004, ILNAS-EN 1997-1/AN-LU:2020';
 const NORMES_2E = 'EN 1997-3:2025, EN 1990:2023';
 
 const bloc = (titre: string, lignes: LigneResultat[]): ElementNote => ({ type: 'bloc', bloc: { titre, lignes, note: null } });
@@ -75,7 +76,7 @@ export function noteDuCalcul(calcul: Calcul, r: Resultat, cartouche: { projet: s
       projet: cartouche.projet,
       element: cartouche.element.trim() === '' ? n.element : cartouche.element,
       date: cartouche.date,
-      norme: norme.generation === 2 ? NORMES_2E : norme.profil === 'anb' ? NORME_1RE_ANB : NORME_1RE,
+      norme: norme.generation === 2 ? NORMES_2E : norme.profil === 'anb' ? NORME_1RE_ANB : norme.annexe !== undefined ? NORME_1RE_LU : NORME_1RE,
       outil: 'pieux',
     },
     sections: {
@@ -90,6 +91,8 @@ export function noteDuCalcul(calcul: Calcul, r: Resultat, cartouche: { projet: s
       calculs: [...tableaux(r), ...detail.map((b): ElementNote => ({ type: 'bloc', bloc: b }))],
     },
     verifications: verificationsDe(r),
-    avertissements: [...(norme.generation === 2 ? [avertissement2eGeneration()] : []), ...r.alertes.map((a) => phrase(a))],
+    avertissements: [
+      ...(norme.generation === 2 ? [avertissement2eGeneration()] : []),
+      ...(norme.generation === 1 && norme.profil === 'recommande' && norme.annexe !== undefined ? [avertissementAnnexeLu()].filter((a) => a !== '') : []), ...r.alertes.map((a) => phrase(a))],
   };
 }

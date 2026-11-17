@@ -11,6 +11,7 @@ import {
   profil2g,
   profilAnb2022,
   type Approche,
+  type Profil1g,
   type ClasseConsequences,
   type Risque,
 } from 'sol-ec7';
@@ -28,7 +29,13 @@ export type Norme2e = {
 );
 
 export type Norme1re =
-  | { generation: 1; profil: 'recommande'; approche: Approche }
+  | {
+      generation: 1;
+      profil: 'recommande';
+      approche: Approche;
+      /** Annexe nationale fournie par l'app (lot E) : profil et reecriture des sources des tableaux A.6 a A.10. */
+      annexe?: { profil: Profil1g; source: (sourceRecommandee: string) => string };
+    }
   | { generation: 1; profil: 'anb'; risque: Risque; densiteCpt: DensiteCpt; rigide: boolean; sondageProche: boolean };
 
 export type Norme = Norme2e | Norme1re;
@@ -363,8 +370,9 @@ function combis1re(d: DonneesPieux, n: Norme1re, nProfils: number, nPieux: numbe
     xiM = Math.max(1, xiM / 1.1);
     xiP = Math.max(1, xiP / 1.1);
   }
-  const sx = 'EN 1997-1:2004, tableau A.10, valeur recommandée';
-  return combinaisons1g(n.approche, profil1g()).map((c) => {
+  const src = n.annexe?.source ?? ((s: string) => s);
+  const sx = src('EN 1997-1:2004, tableau A.10, valeur recommandée');
+  return combinaisons1g(n.approche, n.annexe?.profil ?? profil1g()).map((c) => {
     const jeu = JEU[c.nom];
     return {
       nom: c.nom,
@@ -372,7 +380,7 @@ function combis1re(d: DonneesPieux, n: Norme1re, nProfils: number, nPieux: numbe
       gQ: co('γ_Q', c.structure.gQ_dst.valeur, c.structure.gQ_dst.source),
       gFav: co('γ_G,fav', c.structure.gG_stb.valeur, c.structure.gG_stb.source),
       gDrag: co('γ_G (frottement négatif)', c.geotechnique.gG_dst.valeur, c.geotechnique.gG_dst.source),
-      f: facteurs1re(T1RE[ex][jeu], `EN 1997-1:2004, tableau ${TAB[ex]}, jeu ${jeu}, valeur recommandée`),
+      f: facteurs1re(T1RE[ex][jeu], src(`EN 1997-1:2004, tableau ${TAB[ex]}, jeu ${jeu}, valeur recommandée`)),
       gGroupe: null,
       xiM,
       xiP,
