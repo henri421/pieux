@@ -10,8 +10,9 @@ Page publiée : <https://henri421.github.io/pieux/> (en anglais : `/en/`).
 
 > **Aide au calcul. L'outil constate, il ne prescrit pas.** Valeurs recommandées des normes. q_b et q_s
 > sont saisis par l'utilisateur, couche par couche et profil par profil. La 2ᵉ génération n'est applicable
-> qu'une fois son annexe nationale publiée. **Les valeurs ont été comparées à un calcul indépendant, pas
-> encore à un logiciel du commerce.** La vérification finale incombe à l'ingénieur du projet.
+> qu'une fois son annexe nationale publiée. **Validé sur : exemple A.8 du rapport JRC EUR 26227 EN (2013),
+> pieu foré dimensionné sur un profil CPT (voir `docs/validation/`). Pas encore comparé à un logiciel
+> du commerce.** La vérification finale incombe à l'ingénieur du projet.
 
 ## Ce que l'outil rend
 
