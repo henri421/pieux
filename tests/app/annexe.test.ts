@@ -25,6 +25,9 @@ describe('annexe luxembourgeoise (pieux)', () => {
     const note = noteDuCalcul(ll.calcul, rl, { projet: 'P', element: 'E', date: '2026-11-17' });
     expect(note.cartouche.norme).toContain('AN-LU:2020');
     expect(note.avertissements?.some((a) => /^Annexe nationale luxembourgeoise/.test(a))).toBe(true);
+    // Profil choisi en bloc : l'avertissement ne promet pas de modifier chaque coefficient.
+    expect(note.avertissements?.some((a) => /ne permet pas de les modifier un à un/.test(a))).toBe(true);
+    expect(note.avertissements?.some((a) => /vous pouvez modifier/.test(a))).toBe(false);
     const texte = texteVisible(noteDeCalculHtml(note, ''));
     expect(texte).toContain('ILNAS-EN 1997-1/AN-LU:2020');
     // Valeurs presumees egales aux recommandees : memes verdicts.

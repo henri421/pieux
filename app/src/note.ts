@@ -93,6 +93,6 @@ export function noteDuCalcul(calcul: Calcul, r: Resultat, cartouche: { projet: s
     verifications: verificationsDe(r),
     avertissements: [
       ...(norme.generation === 2 ? [avertissement2eGeneration()] : []),
-      ...(norme.generation === 1 && norme.profil === 'recommande' && norme.annexe !== undefined ? [avertissementAnnexeLu()].filter((a) => a !== '') : []), ...r.alertes.map((a) => phrase(a))],
+      ...(norme.generation === 1 && norme.profil === 'recommande' && norme.annexe !== undefined ? [avertissementAnnexeLu(false)].filter((a) => a !== '') : []), ...r.alertes.map((a) => phrase(a))],
   };
 }
