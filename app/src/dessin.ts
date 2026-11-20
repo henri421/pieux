@@ -4,7 +4,8 @@
  * en x et en y ; la vue en plan, à droite, a sa propre échelle.
  */
 
-import type { Calcul, Resultat } from './form';
+import type { Calcul, CalculTr, Resultat } from './form';
+import type { ResultatPY, ResultatTransversal } from '../../src/transversal';
 import { textes } from './textes';
 
 export interface OptionsCoupe {
@@ -249,6 +250,118 @@ export function coupe(c: Calcul, r: Resultat, o: OptionsCoupe): string {
 
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${a(largeur)} ${a(hauteur)}" role="img" aria-label="${esc(t.aria)}">` +
+    g.join('') +
+    '</svg>'
+  );
+}
+
+// --- Onglet Transversal ------------------------------------------------------
+
+export interface OptionsTransversal {
+  /** Nom d'une combinaison ELU, ou 'ELS'. */
+  vue: string;
+  y: boolean;
+  M: boolean;
+  V: boolean;
+  p: boolean;
+}
+
+/** Résultat p-y de la vue : null si la combinaison n'a pas d'équilibre ou n'existe pas. */
+export function resultatDeVue(r: ResultatTransversal, vue: string): ResultatPY | null {
+  if (vue === 'ELS') return r.service;
+  return (r.combinaisons.find((k) => k.nom === vue) ?? r.combinaisons[0])?.py ?? null;
+}
+
+/** Hauteur utile du dessin, en pixels : l'échelle s'adapte à la longueur du pieu. */
+const H_TR = 440;
+const COL_COUPE = 190;
+const COL_DIAG = 150;
+
+/**
+ * Coupe du pieu et des couches, puis une colonne par diagramme (y, M, V, p avec ±p_f).
+ * Même échelle verticale pour toutes les colonnes ; chaque diagramme a sa propre échelle
+ * horizontale, sa valeur extrême est cotée.
+ */
+export function dessinTransversal(c: CalculTr, r: ResultatTransversal, o: OptionsTransversal): string {
+  const t = textes().tr.dessin;
+  const d = c.donnees;
+  const L = Number.isFinite(r.longueur) && r.longueur > 0 ? r.longueur : 1;
+  const S = H_TR / L;
+  const yTop = PAD.haut + 46;
+  const yBas = yTop + L * S;
+  const Y = (z: number): number => yTop + z * S;
+  const g: string[] = [];
+
+  // Coupe : couches, nappe, pieu, charge.
+  const x0 = PAD.gauche;
+  let prof = 0;
+  d.couches.forEach((k, i) => {
+    const h = Number.isFinite(k.h) && k.h > 0 ? k.h : 0;
+    g.push(`<rect class="couche couche-${i % 3}" x="${a(x0)}" y="${a(Y(prof))}" width="${COL_COUPE}" height="${a(h * S)}"/>`);
+    if (h * S > 16) g.push(texte(x0 + 6, Y(prof) + 14, 'texte-coupe', esc(k.nom)));
+    prof += h;
+  });
+  g.push(ligne(x0, yTop, x0 + COL_COUPE, yTop, 'terrain'));
+  if (Number.isFinite(d.zNappe) && d.zNappe > 0 && d.zNappe < L) {
+    g.push(`<g data-role="nappe">${ligne(x0, Y(d.zNappe), x0 + COL_COUPE, Y(d.zNappe), 'plan-neutre')}${texte(x0 + COL_COUPE - 4, Y(d.zNappe) - 4, 'texte-coupe', esc(t.nappe), 'end')}</g>`);
+  }
+  const cx = x0 + COL_COUPE * 0.62;
+  const larg = Math.max(8, Math.min(30, d.D * S));
+  g.push(`<rect class="pieu" x="${a(cx - larg / 2)}" y="${a(yTop)}" width="${a(larg)}" height="${a(L * S)}"/>`);
+  g.push(ligne(cx - 46, yTop - 10, cx - larg / 2 - 3, yTop - 10, 'charge'));
+  g.push(`<path class="charge" d="M${a(cx - larg / 2 - 3)} ${a(yTop - 10)} l-7 -4 m7 4 l-7 4" fill="none"/>`);
+  if (d.tete === 'encastree') g.push(texte(cx, yTop - 22, 'texte-coupe', esc(t.encastree), 'middle'));
+  const py = resultatDeVue(r, o.vue);
+  const comb = r.combinaisons.find((k) => k.nom === o.vue);
+  const charge = o.vue === 'ELS'
+    ? { H: d.efforts.HG + d.efforts.HQ, M: d.efforts.MG + d.efforts.MQ, N: d.efforts.NG + d.efforts.NQ }
+    : comb ? { H: comb.Hd, M: comb.Md, N: comb.Nd } : { H: 0, M: 0, N: 0 };
+  g.push(texte(x0, PAD.haut, 'texte-coupe', esc(`${o.vue} · ${t.charge(nb(charge.H), nb(charge.M), nb(charge.N))}`)));
+  const xCote = x0 + COL_COUPE + 10;
+  g.push(ligne(xCote, yTop, xCote, yBas, 'cote'));
+  g.push(texte(xCote + 4, yBas + 14, 'cote', esc(t.longueur(nb(L))), 'middle'));
+
+  let largeur = xCote + 20;
+  if (py === null) {
+    g.push(texte(x0, yBas + 32, 'texte-coupe', esc(t.sansEquilibre(o.vue))));
+    largeur = Math.max(largeur, x0 + 420);
+  } else {
+    const diagrammes: { role: string; titre: string; v: number[]; fact: number; dec: number }[] = [];
+    if (o.y) diagrammes.push({ role: 'y', titre: t.y, v: py.y, fact: 1000, dec: 1 });
+    if (o.M) diagrammes.push({ role: 'M', titre: t.M, v: py.M, fact: 1, dec: 1 });
+    if (o.V) diagrammes.push({ role: 'V', titre: t.V, v: py.V, fact: 1, dec: 1 });
+    if (o.p) diagrammes.push({ role: 'p', titre: t.p, v: py.p, fact: 1, dec: 0 });
+    let xc = largeur + 20;
+    for (const dg of diagrammes) {
+      const v = dg.v.map((x) => (Number.isFinite(x) ? x * dg.fact : 0));
+      const bornes = dg.role === 'p' ? py.pf.filter(Number.isFinite) : [];
+      const max = Math.max(1e-9, ...v.map(Math.abs), ...bornes);
+      const xm = xc + COL_DIAG / 2;
+      const k = (COL_DIAG / 2 - 8) / max;
+      g.push(texte(xm, yTop - 26, 'texte-coupe', esc(dg.titre), 'middle'));
+      g.push(ligne(xm, yTop, xm, yBas, 'cote'));
+      if (dg.role === 'p') {
+        const droite = py.z.map((z, i) => `${a(xm + py.pf[i] * k)},${a(Y(z))}`).join(' ');
+        const gauche = py.z.map((z, i) => `${a(xm - py.pf[i] * k)},${a(Y(z))}`).join(' ');
+        g.push(`<g data-role="pf"><polyline class="pf" points="${droite}"/><polyline class="pf" points="${gauche}"/></g>`);
+      }
+      const pts = [`${a(xm)},${a(yTop)}`, ...py.z.map((z, i) => `${a(xm + v[i] * k)},${a(Y(z))}`), `${a(xm)},${a(yBas)}`].join(' ');
+      let iMax = 0;
+      for (let i = 1; i < v.length; i += 1) if (Math.abs(v[i]) > Math.abs(v[iMax])) iMax = i;
+      const xv = xm + v[iMax] * k;
+      g.push(
+        `<g data-role="${dg.role}"><polygon class="diagramme diagramme-${dg.role}" points="${pts}"/>` +
+          `<circle class="extreme" cx="${a(xv)}" cy="${a(Y(py.z[iMax]))}" r="2.5"/>` +
+          texte(xv + (v[iMax] >= 0 ? 4 : -4), Y(py.z[iMax]) - 4, 'texte-coupe', esc(nb(Number(v[iMax].toFixed(dg.dec)))), v[iMax] >= 0 ? 'start' : 'end') +
+          '</g>',
+      );
+      xc += COL_DIAG + 10;
+    }
+    largeur = xc;
+  }
+  const hauteur = yBas + 44;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${a(largeur + PAD.droite)} ${a(hauteur)}" role="img" aria-label="${esc(t.aria)}">` +
     g.join('') +
     '</svg>'
   );

@@ -799,3 +799,10 @@ svg .texte-coupe {
 .coefficient { display: flex; flex-wrap: wrap; gap: 0.15rem 1.25rem; padding: 0.35rem 0; border-top: 1px solid var(--trait, #e4e2dc); }
 .coefficient { justify-content: space-between; }
 .coefficient .source { color: var(--texte-doux); font-size: 0.85rem; }
+
+/* --- Onglet Transversal : diagrammes ------------------------------------ */
+
+svg .diagramme { fill: var(--accent); fill-opacity: 0.18; stroke: var(--accent); stroke-width: 1.2; }
+svg .diagramme-p { fill: var(--compression); stroke: var(--compression); }
+svg .pf { fill: none; stroke: var(--alerte); stroke-width: 1; stroke-dasharray: 5 3; }
+svg .extreme { fill: var(--texte); }

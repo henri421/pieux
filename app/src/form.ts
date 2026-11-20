@@ -17,6 +17,7 @@ import {
   type Execution,
   type ResultatPieux,
 } from '../../src/pieux';
+import { verifierTransversal, type ClasseYf, type Comportement, type DonneesTransversal, type ResultatTransversal } from '../../src/transversal';
 import { textes } from './textes';
 
 export interface SaisieCouche {
@@ -24,6 +25,14 @@ export interface SaisieCouche {
   h: string;
   tauDd: string;
   qs: string[];
+  /** Onglet Transversal : comportement 'draine' | 'non-draine', y_f 'grenu' | 'fin-court' | 'fin-long'. */
+  gamma: string;
+  gammaSat: string;
+  comportement: string;
+  phi: string;
+  c: string;
+  cu: string;
+  yf: string;
 }
 
 export interface Saisie {
@@ -58,6 +67,19 @@ export interface Saisie {
   densiteCpt: string;
   rigide: boolean;
   sondageProche: boolean;
+  /** Onglet actif et saisie du transversal (lot F). */
+  mode: 'axial' | 'transversal';
+  EI: string;
+  tete: string;
+  zNappe: string;
+  fluage: boolean;
+  HtG: string;
+  HtQ: string;
+  MtG: string;
+  MtQ: string;
+  NtG: string;
+  NtQ: string;
+  MRd: string;
 }
 
 export interface Calcul {
@@ -66,9 +88,20 @@ export interface Calcul {
 }
 export type Resultat = ResultatPieux;
 export type Lecture = { ok: true; calcul: Calcul } | { ok: false; message: string };
+export interface CalculTr {
+  saisie: Saisie;
+  donnees: DonneesTransversal;
+}
+export type LectureTr = { ok: true; calcul: CalculTr } | { ok: false; message: string };
 
 /** Format du fichier enregistre. */
 const FORMAT = 'pieux/1';
+
+type ChampsTr = Pick<SaisieCouche, 'gamma' | 'gammaSat' | 'comportement' | 'phi' | 'c' | 'cu' | 'yf'>;
+/** Sol transversal du cas de la maquette transversale (couche neuve : celle du remblai). */
+const TR_REMBLAI: ChampsTr = { gamma: '18', gammaSat: '20', comportement: 'draine', phi: '30', c: '0', cu: '', yf: 'grenu' };
+const TR_ARGILE: ChampsTr = { gamma: '19', gammaSat: '19', comportement: 'non-draine', phi: '', c: '', cu: '50', yf: 'fin-court' };
+const TR_SABLE: ChampsTr = { gamma: '20', gammaSat: '21', comportement: 'draine', phi: '35', c: '0', cu: '', yf: 'grenu' };
 
 /** Le cas de la maquette, nombres ecrits a la francaise. */
 export function saisieParDefaut(): Saisie {
@@ -82,9 +115,9 @@ export function saisieParDefaut(): Saisie {
     ratioQbBloc: '1',
     redistribution: false,
     couches: [
-      { nom: 'Remblai', h: '3', tauDd: '20', qs: ['0', '0', '0'] },
-      { nom: 'Argile', h: '5', tauDd: '0', qs: ['40', '35', '45'] },
-      { nom: 'Sable', h: '6', tauDd: '0', qs: ['80', '70', '75'] },
+      { nom: 'Remblai', h: '3', tauDd: '20', qs: ['0', '0', '0'], ...TR_REMBLAI },
+      { nom: 'Argile', h: '5', tauDd: '0', qs: ['40', '35', '45'], ...TR_ARGILE },
+      { nom: 'Sable', h: '6', tauDd: '0', qs: ['80', '70', '75'], ...TR_SABLE },
     ],
     qb: ['2800', '2400', '2600'],
     VG: '2000',
@@ -108,6 +141,18 @@ export function saisieParDefaut(): Saisie {
     densiteCpt: '100',
     rigide: false,
     sondageProche: false,
+    mode: 'axial',
+    EI: '190852',
+    tete: 'libre',
+    zNappe: '3',
+    fluage: false,
+    HtG: '60',
+    HtQ: '40',
+    MtG: '0',
+    MtQ: '0',
+    NtG: '800',
+    NtQ: '300',
+    MRd: '',
   };
 }
 
@@ -176,7 +221,22 @@ export function lireSaisie(s: Saisie): Lecture {
       sAdm: nb(s.sAdm, c.sAdm),
     };
 
-    let norme: DonneesPieux['norme'];
+    const norme = lireNorme(s);
+
+    return {
+      ok: true,
+      calcul: { saisie: s, donnees: { pieu, groupe, couches, qb, efforts, service, norme } },
+    };
+  } catch (e) {
+    if (e instanceof Refus) return { ok: false, message: e.message };
+    throw e;
+  }
+}
+
+/** Norme commune aux deux onglets. */
+function lireNorme(s: Saisie): DonneesPieux['norme'] {
+  const c = textes().refus.champs;
+  let norme: DonneesPieux['norme'];
     if (s.generation === '1re') {
       if (s.profilNormatif === 'anb2022') {
         norme = {
@@ -219,15 +279,56 @@ export function lireSaisie(s: Saisie): Lecture {
               dAvg: nb(s.dAvg, c.dAvg),
             };
     }
+  return norme;
+}
 
-    return {
-      ok: true,
-      calcul: { saisie: s, donnees: { pieu, groupe, couches, qb, efforts, service, norme } },
+const COMPORTEMENTS: readonly Comportement[] = ['draine', 'non-draine'];
+const CLASSES_YF: readonly ClasseYf[] = ['grenu', 'fin-court', 'fin-long'];
+
+/** Saisie de l'onglet Transversal ; refuse en nommant le champ ou la couche et le champ. */
+export function lireTransversal(s: Saisie): LectureTr {
+  try {
+    const c = textes().refus.champs;
+    const couches = s.couches.map((k) => {
+      const comportement = choix(k.comportement, COMPORTEMENTS, 'draine');
+      const draine = comportement === 'draine';
+      return {
+        nom: k.nom,
+        h: nbCouche(k.h, k.nom, c.h),
+        gamma: nbCouche(k.gamma, k.nom, c.gamma),
+        gammaSat: nbCouche(k.gammaSat, k.nom, c.gammaSat),
+        comportement,
+        phi: draine ? nbCouche(k.phi, k.nom, c.phi) : 0,
+        c: draine ? nbCouche(k.c, k.nom, c.c) : 0,
+        cu: draine ? 0 : nbCouche(k.cu, k.nom, c.cu),
+        yf: choix(k.yf, CLASSES_YF, 'grenu'),
+      };
+    });
+    const donnees: DonneesTransversal = {
+      D: nb(s.D, c.D),
+      EI: nb(s.EI, c.EI),
+      tete: s.tete === 'encastree' ? 'encastree' : 'libre',
+      zNappe: nb(s.zNappe, c.zNappe),
+      fluage: s.fluage,
+      couches,
+      efforts: {
+        HG: nb(s.HtG, c.HtG), HQ: nb(s.HtQ, c.HtQ),
+        MG: nb(s.MtG, c.MtG), MQ: nb(s.MtQ, c.MtQ),
+        NG: nb(s.NtG, c.NtG), NQ: nb(s.NtQ, c.NtQ),
+      },
+      MRd: s.MRd.trim() === '' ? null : nb(s.MRd, c.MRd),
+      norme: lireNorme(s),
     };
+    return { ok: true, calcul: { saisie: s, donnees } };
   } catch (e) {
     if (e instanceof Refus) return { ok: false, message: e.message };
     throw e;
   }
+}
+
+/** Verification transversale du noyau ; leve si le noyau refuse (message du noyau). */
+export function verifierTr(calcul: CalculTr): ResultatTransversal {
+  return verifierTransversal(calcul.donnees);
 }
 
 /** Verification du noyau. Leve si le noyau refuse la saisie ; le message est celui du noyau. */
@@ -256,7 +357,7 @@ export function ajouterCouche(s: Saisie): Saisie {
     ...s,
     couches: [
       ...s.couches,
-      { nom: `Couche ${n}`, h: '0', tauDd: '0', qs: s.qb.map(() => '0') },
+      { nom: `Couche ${n}`, h: '0', tauDd: '0', qs: s.qb.map(() => '0'), ...TR_REMBLAI },
     ],
   };
 }
@@ -323,6 +424,13 @@ function couchesOu(valeur: unknown, defaut: SaisieCouche[]): SaisieCouche[] {
       h: texteOu(o.h, d.h),
       tauDd: texteOu(o.tauDd, d.tauDd),
       qs: tableauTexteOu(o.qs, d.qs),
+      gamma: texteOu(o.gamma, d.gamma),
+      gammaSat: texteOu(o.gammaSat, d.gammaSat),
+      comportement: choixOu(o.comportement, ['draine', 'non-draine'] as const, d.comportement as Comportement),
+      phi: texteOu(o.phi, d.phi),
+      c: texteOu(o.c, d.c),
+      cu: texteOu(o.cu, d.cu),
+      yf: choixOu(o.yf, ['grenu', 'fin-court', 'fin-long'] as const, d.yf as ClasseYf),
     };
   });
 }
@@ -370,5 +478,17 @@ export function relire(contenu: string): Saisie {
     densiteCpt: choixOu(brut.densiteCpt, ['10', '50', '100', '300', '1000'] as const, d.densiteCpt),
     rigide: boolOu(brut.rigide, d.rigide),
     sondageProche: boolOu(brut.sondageProche, d.sondageProche),
+    mode: choixOu(brut.mode, ['axial', 'transversal'] as const, d.mode),
+    EI: texteOu(brut.EI, d.EI),
+    tete: choixOu(brut.tete, ['libre', 'encastree'] as const, 'libre'),
+    zNappe: texteOu(brut.zNappe, d.zNappe),
+    fluage: boolOu(brut.fluage, d.fluage),
+    HtG: texteOu(brut.HtG, d.HtG),
+    HtQ: texteOu(brut.HtQ, d.HtQ),
+    MtG: texteOu(brut.MtG, d.MtG),
+    MtQ: texteOu(brut.MtQ, d.MtQ),
+    NtG: texteOu(brut.NtG, d.NtG),
+    NtQ: texteOu(brut.NtQ, d.NtQ),
+    MRd: texteOu(brut.MRd, d.MRd),
   };
 }
