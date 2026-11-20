@@ -91,7 +91,7 @@ describe('poutre sur ressorts p-y', () => {
       const r = verifierTransversal(cas(tete));
       expect(r.combinaisons.map((k) => k.nom)).toEqual(['(a)', '(b)']);
       for (const k of r.combinaisons) {
-        const a = (ref[tete] as Record<string, Record<string, number>>)[k.nom];
+        const a = (ref[tete] as unknown as Record<string, Record<string, number>>)[k.nom];
         proche(k.py!.yTete, a.y0, 1e-4);
         proche(k.py!.MEd, a.MEd, 1e-4);
         expect(Math.abs(k.py!.zMEd - a.zM)).toBeLessThanOrEqual(1e-6);
@@ -101,7 +101,7 @@ describe('poutre sur ressorts p-y', () => {
         proche(k.taux, a.taux, 1e-6);
         proche(k.resistance.H, a.Hult, 1e-6);
       }
-      const s = (ref[tete] as Record<string, Record<string, number>>).ELS;
+      const s = (ref[tete] as unknown as Record<string, Record<string, number>>).ELS;
       proche(r.service!.yTete, s.y0, 1e-4);
       proche(r.service!.MEd, s.MEd, 1e-4);
     }
