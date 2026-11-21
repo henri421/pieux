@@ -24,6 +24,7 @@ import {
   ajouterCouche,
   ajouterProfil,
   lireSaisie,
+  lireTransversal,
   proposerRendement,
   relire,
   retirerCouche,
@@ -31,15 +32,18 @@ import {
   saisieParDefaut,
   serialiser,
   verifier,
+  verifierTr,
   type Calcul,
+  type CalculTr,
   type Resultat,
   type Saisie,
 } from './form';
-import { coupe, type OptionsCoupe } from './dessin';
+import { coupe, dessinTransversal, type OptionsCoupe, type OptionsTransversal } from './dessin';
+import type { ResultatTransversal } from '../../src/transversal';
 import { STYLES_TRACE } from './export';
-import { noteDuCalcul } from './note';
+import { noteDuCalcul, noteTransversale } from './note';
 import { textes } from './textes';
-import { blocEntrees, blocsResultat, couchesHtml, messageDErreur, verdictsHtml, voletsHtml } from './vue';
+import { blocEntrees, blocsCsvTr, blocsResultat, couchesHtml, couchesTrHtml, messageDErreur, verdictsHtml, verdictsTrHtml, voletsHtml, voletsTrHtml } from './vue';
 import './style.css';
 
 // La langue d'abord : tout rendu la lit (`index.html` ou `en/index.html`).
@@ -61,6 +65,9 @@ const zones = {
   coupe: exige<HTMLElement>('[data-role="coupe"]'),
   verdicts: exige<HTMLElement>('[data-role="verdicts"]'),
   volets: exige<HTMLElement>('[data-role="volets"]'),
+  couchesTr: exige<HTMLElement>('[data-role="couches-tr"]'),
+  dessinTr: exige<HTMLElement>('[data-role="dessin-tr"]'),
+  vuesTr: exige<HTMLElement>('[data-role="vues-tr"]'),
 };
 const champProjet = exige<HTMLInputElement>('[data-role="projet"]');
 const champElement = exige<HTMLInputElement>('[data-role="element"]');
@@ -106,6 +113,10 @@ interface Dernier {
 }
 let dernier: Dernier | null = null;
 
+/** Dernier calcul transversal valide, et la vue des diagrammes (combinaison ou 'ELS'). */
+let dernierTr: { calcul: CalculTr; resultat: ResultatTransversal } | null = null;
+let vueTr = '';
+
 /** Recopie la saisie dans les champs `data-champ`, puis met l'affichage a jour. */
 function ecrireSaisie(): void {
   for (const e of formulaire.querySelectorAll<HTMLInputElement | HTMLSelectElement>('[data-champ]')) {
@@ -125,6 +136,12 @@ function montrerErreur(message: string | null): void {
 
 /** Les lignes qui dependent d'un choix s'affichent avec lui ; leur valeur reste en memoire. */
 function ajusterAffichage(): void {
+  for (const b of formulaire.querySelectorAll<HTMLButtonElement>('[data-mode]')) {
+    b.setAttribute('aria-pressed', String(b.dataset.mode === saisie.mode));
+  }
+  for (const z of document.querySelectorAll<HTMLElement>('[data-mode-seul]')) {
+    z.hidden = z.dataset.modeSeul !== saisie.mode;
+  }
   for (const b of formulaire.querySelectorAll<HTMLButtonElement>('[data-generation]')) {
     b.setAttribute('aria-pressed', String(b.dataset.generation === saisie.generation));
   }
@@ -159,6 +176,7 @@ function ajusterAffichage(): void {
 /** Les couches et la ligne de pointe dependent du nombre de profils : re-rendues apres chaque action. */
 function rendreCouches(): void {
   zones.couches.innerHTML = couchesHtml(saisie);
+  zones.couchesTr.innerHTML = couchesTrHtml(saisie);
 }
 
 function optionsDessin(): OptionsCoupe {
@@ -173,6 +191,53 @@ function renduDessin(): void {
   zones.coupe.innerHTML = dernier === null ? '' : coupe(dernier.calcul, dernier.resultat, optionsDessin());
 }
 
+function optionsTr(): OptionsTransversal {
+  const coche = (k: string) => exige<HTMLInputElement>(`[data-option-tr="${k}"]`).checked;
+  return { vue: vueTr, y: coche('y'), M: coche('M'), V: coche('V'), p: coche('p') };
+}
+
+/** Boutons de vue (combinaisons, ELS) et diagrammes du transversal. */
+function renduTr(): void {
+  if (dernierTr === null) {
+    zones.vuesTr.innerHTML = '';
+    zones.dessinTr.innerHTML = '';
+    return;
+  }
+  const r = dernierTr.resultat;
+  const vues = [...r.combinaisons.map((k) => k.nom), 'ELS'];
+  if (!vues.includes(vueTr)) vueTr = r.MEd.combinaison !== '' ? r.MEd.combinaison : vues[0];
+  zones.vuesTr.innerHTML = vues
+    .map((v) => `<button type="button" data-vue-tr="${v}" aria-pressed="${v === vueTr}">${v === 'ELS' ? textes().tr.vue.ELS : v}</button>`)
+    .join('');
+  zones.dessinTr.innerHTML = dessinTransversal(dernierTr.calcul, r, optionsTr());
+}
+
+function recalculerTr(): void {
+  dernier = null;
+  const lecture = lireTransversal(saisie);
+  let resultat: ResultatTransversal | null = null;
+  let message: string | null = lecture.ok ? null : lecture.message;
+  if (lecture.ok) {
+    try {
+      resultat = verifierTr(lecture.calcul);
+    } catch (e) {
+      message = messageDErreur(e);
+    }
+  }
+  if (!lecture.ok || resultat === null) {
+    montrerErreur(message);
+    dernierTr = null;
+    zones.verdicts.innerHTML = '';
+    zones.volets.innerHTML = '';
+    return renduTr();
+  }
+  montrerErreur(null);
+  dernierTr = { calcul: lecture.calcul, resultat };
+  zones.verdicts.innerHTML = verdictsTrHtml(resultat, lecture.calcul.donnees.MRd);
+  zones.volets.innerHTML = voletsTrHtml(noteTransversale(lecture.calcul, resultat, cartouche()));
+  renduTr();
+}
+
 function viderResultats(): void {
   dernier = null;
   zones.verdicts.innerHTML = '';
@@ -183,6 +248,8 @@ function viderResultats(): void {
 function recalculer(): void {
   memoriser();
   ajusterAffichage();
+  if (saisie.mode === 'transversal') return recalculerTr();
+  dernierTr = null;
   const lecture = lireSaisie(saisie);
   if (!lecture.ok) {
     montrerErreur(lecture.message);
@@ -225,7 +292,11 @@ function lireEdition(cible: EventTarget | null): void {
     if (d.sous === 'nom') couche.nom = cible.value;
     else if (d.sous === 'h') couche.h = cible.value;
     else if (d.sous === 'tauDd') couche.tauDd = cible.value;
-    else return;
+    else if (['gamma', 'gammaSat', 'comportement', 'phi', 'c', 'cu', 'yf'].includes(d.sous)) {
+      (couche as unknown as Record<string, string>)[d.sous] = cible.value;
+      // Le comportement change les cases grisees du tableau.
+      if (d.sous === 'comportement') rendreCouches();
+    } else return;
   } else if (d.qs !== undefined) {
     const [i, p] = d.qs.split(':').map((x) => entier(x));
     if (i === null || p === null || i >= saisie.couches.length || p >= saisie.couches[i].qs.length) return;
@@ -244,6 +315,9 @@ formulaire.addEventListener('input', (evenement) => lireEdition(evenement.target
 
 for (const option of document.querySelectorAll<HTMLInputElement>('[data-option]')) {
   option.addEventListener('input', () => renduDessin());
+}
+for (const option of document.querySelectorAll<HTMLInputElement>('[data-option-tr]')) {
+  option.addEventListener('input', () => renduTr());
 }
 
 function cartouche(): { projet: string; element: string; date: string } {
@@ -265,6 +339,15 @@ document.addEventListener('click', (evenement) => {
     saisie = { ...saisie, generation: d.generation };
     ajusterAffichage();
     return recalculer();
+  }
+
+  if (d.mode === 'axial' || d.mode === 'transversal') {
+    saisie = { ...saisie, mode: d.mode };
+    return recalculer();
+  }
+  if (d.vueTr !== undefined) {
+    vueTr = d.vueTr;
+    return renduTr();
   }
 
   const action = d.action;
@@ -309,6 +392,16 @@ document.addEventListener('click', (evenement) => {
   }
 
   if (!action.startsWith('exporter-')) return;
+  if (saisie.mode === 'transversal') {
+    if (dernierTr === null) return montrerErreur(textes().messages.rienAExporter);
+    const tr = dernierTr;
+    const note = noteTransversale(tr.calcul, tr.resultat, cartouche());
+    if (action === 'exporter-note-pdf') void telechargerNotePdf('pieux-transversal-note.pdf', note, STYLES_TRACE).catch(() => ouvrirOuTelecharger('pieux-transversal-note.html', noteDeCalculHtml(note, STYLES_TRACE)));
+    else if (action === 'exporter-note') ouvrirOuTelecharger('pieux-transversal-note.html', noteDeCalculHtml(note, STYLES_TRACE));
+    else if (action === 'exporter-coupe') telecharger('pieux-transversal.svg', svgAutonome(dessinTransversal(tr.calcul, tr.resultat, optionsTr()), STYLES_TRACE), 'image/svg+xml;charset=utf-8');
+    else if (action === 'exporter-resultats') telecharger('pieux-transversal.csv', resultatsEnCsv(blocsEnTexte(blocsCsvTr(note))), 'text/csv;charset=utf-8');
+    return;
+  }
   if (dernier === null) return montrerErreur(textes().messages.rienAExporter);
   const e = dernier;
   if (action === 'exporter-note' || action === 'exporter-note-pdf') {

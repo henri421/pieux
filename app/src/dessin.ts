@@ -334,15 +334,15 @@ export function dessinTransversal(c: CalculTr, r: ResultatTransversal, o: Option
     let xc = largeur + 20;
     for (const dg of diagrammes) {
       const v = dg.v.map((x) => (Number.isFinite(x) ? x * dg.fact : 0));
-      const bornes = dg.role === 'p' ? py.pf.filter(Number.isFinite) : [];
-      const max = Math.max(1e-9, ...v.map(Math.abs), ...bornes);
+      // p : échelle sur 2·max|p|, ±p_f écrêté à la colonne (p_f profond très grand).
+      const max = Math.max(1e-9, ...v.map(Math.abs)) * (dg.role === 'p' ? 2 : 1);
       const xm = xc + COL_DIAG / 2;
       const k = (COL_DIAG / 2 - 8) / max;
       g.push(texte(xm, yTop - 26, 'texte-coupe', esc(dg.titre), 'middle'));
       g.push(ligne(xm, yTop, xm, yBas, 'cote'));
       if (dg.role === 'p') {
-        const droite = py.z.map((z, i) => `${a(xm + py.pf[i] * k)},${a(Y(z))}`).join(' ');
-        const gauche = py.z.map((z, i) => `${a(xm - py.pf[i] * k)},${a(Y(z))}`).join(' ');
+        const droite = py.z.map((z, i) => `${a(xm + Math.min(py.pf[i], max) * k)},${a(Y(z))}`).join(' ');
+        const gauche = py.z.map((z, i) => `${a(xm - Math.min(py.pf[i], max) * k)},${a(Y(z))}`).join(' ');
         g.push(`<g data-role="pf"><polyline class="pf" points="${droite}"/><polyline class="pf" points="${gauche}"/></g>`);
       }
       const pts = [`${a(xm)},${a(yTop)}`, ...py.z.map((z, i) => `${a(xm + v[i] * k)},${a(Y(z))}`), `${a(xm)},${a(yBas)}`].join(' ');

@@ -27,10 +27,10 @@
       <h1>Piles</h1>
       <p class="sous-titre">
         Axial bearing capacity of a pile and of a group under a rigid cap, negative skin friction and simple
-        settlement (EN 1997), in 1<sup>st</sup> or 2<sup>nd</sup> generation.
+        settlement (EN 1997), in 1<sup>st</sup> or 2<sup>nd</sup> generation. Transverse tab: single pile under horizontal load, EN 1997-3 p-y springs (C.12).
       </p>
       <p class="avertissement">
-        Not covered: transverse load, piled raft, cyclic loading, CPT or pressuremeter methods
+        Not covered: group effect under transverse load, piled raft, cyclic loading, CPT or pressuremeter methods
         (q<sub>b</sub> and q<sub>s</sub> are input), structural resistance of the shaft (to be checked
         separately, forces are provided).
       </p>
@@ -41,9 +41,15 @@
         <form id="formulaire" autocomplete="off" novalidate>
           <p data-role="erreur" class="erreur" role="alert" hidden></p>
 
+          <input type="hidden" data-champ="mode" />
+          <div class="onglets" role="group">
+            <button type="button" data-mode="axial">Axial</button>
+            <button type="button" data-mode="transversal">Transverse</button>
+          </div>
+
           <fieldset>
             <legend>Pile</legend>
-            <label class="ligne">
+            <label class="ligne" data-mode-seul="axial">
               <span>Installation method</span>
               <select data-champ="execution">
                 <option value="fore">Bored</option>
@@ -57,9 +63,25 @@
               <span>Diameter D (m)</span>
               <input type="text" inputmode="decimal" data-champ="D" />
             </label>
+            <label class="ligne" data-mode-seul="transversal">
+              <span>Stiffness EI (kN·m²)</span>
+              <input type="text" inputmode="decimal" data-champ="EI" />
+            </label>
+            <p class="source" data-mode-seul="transversal">Uncracked C30/37 concrete, D = 0.6 m: EI = 30 GPa × π·D⁴/64 ≈ 1.91·10⁵ kN·m². Free input (cracking, steel tube…).</p>
+            <label class="ligne" data-mode-seul="transversal">
+              <span>Head</span>
+              <select data-champ="tete">
+                <option value="libre">Free</option>
+                <option value="encastree">Fixed (no rotation)</option>
+              </select>
+            </label>
+            <label class="ligne" data-mode-seul="transversal">
+              <span>Pile M<sub>Rd</sub> (kN·m), optional</span>
+              <input type="text" inputmode="decimal" data-champ="MRd" placeholder="none" />
+            </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Group under rigid cap</legend>
             <label class="ligne">
               <span>Rows along x</span>
@@ -93,7 +115,7 @@
             </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Soil and resistances (kPa)</legend>
             <div class="boutons">
               <button type="button" data-action="ajouter-profil">+ profile</button>
@@ -106,7 +128,7 @@
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Loads on the cap</legend>
             <label class="ligne">
               <span>V<sub>G</sub> (kN)</span>
@@ -126,7 +148,7 @@
             </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Serviceability</legend>
             <label class="ligne">
               <span>Equivalent modulus at the base E<sub>eq</sub> (MPa)</span>
@@ -144,6 +166,32 @@
               <span>Allowable settlement (mm)</span>
               <input type="text" inputmode="decimal" data-champ="sAdm" />
             </label>
+          </fieldset>
+
+          <fieldset data-mode-seul="transversal">
+            <legend>Loads at the head, per pile</legend>
+            <div class="trois"><span></span><b>G</b><b>Q</b></div>
+            <div class="trois"><span>H (kN)</span><input type="text" inputmode="decimal" data-champ="HtG" /><input type="text" inputmode="decimal" data-champ="HtQ" /></div>
+            <div class="trois"><span>M (kN·m)</span><input type="text" inputmode="decimal" data-champ="MtG" /><input type="text" inputmode="decimal" data-champ="MtQ" /></div>
+            <div class="trois"><span>N compression (kN)</span><input type="text" inputmode="decimal" data-champ="NtG" /><input type="text" inputmode="decimal" data-champ="NtQ" /></div>
+            <p class="source">M &gt; 0 acts like H applied above the head. N enters the bending equation (N·y″, C.21).</p>
+          </fieldset>
+
+          <fieldset data-mode-seul="transversal">
+            <legend>Soil for the transverse check</legend>
+            <label class="ligne">
+              <span>Water table below the head (m)</span>
+              <input type="text" inputmode="decimal" data-champ="zNappe" />
+            </label>
+            <div data-role="couches-tr"></div>
+            <div class="boutons">
+              <button type="button" data-action="ajouter-couche">+ layer</button>
+            </div>
+            <label class="coche">
+              <input type="checkbox" data-champ="fluage" />
+              Very viscous soil (creep): p<sub>f</sub> = 6·c<sub>u</sub> (C.17) instead of 9·c<sub>u</sub>
+            </label>
+            <p class="source">Names and thicknesses shared with the Axial tab. Undrained: p<sub>f</sub> = min(9·c<sub>u</sub>; c<sub>u</sub>(2 + (2/3)z/D) + σ′<sub>v</sub>) (C.16, C.18). Drained: p<sub>f</sub> = K<sub>q</sub>σ′<sub>v</sub> + K<sub>c</sub>c′ (C.19), Brinch Hansen.</p>
           </fieldset>
 
           <fieldset>
@@ -290,7 +338,7 @@
           </p>
         </div>
 
-        <div class="visuels" aria-label="Section">
+        <div class="visuels" data-mode-seul="axial" aria-label="Section">
           <div class="outils">
             <span class="titre">Section</span>
             <label><input type="checkbox" data-option="cotes" checked /> dimensions</label>
@@ -298,6 +346,18 @@
             <label><input type="checkbox" data-option="planNeutre" checked /> neutral plane</label>
           </div>
           <div class="dessin" data-role="coupe"></div>
+        </div>
+
+        <div class="visuels" data-mode-seul="transversal" aria-label="Diagrams of the pile under transverse load">
+          <div class="outils">
+            <span class="titre">Diagrams</span>
+            <span data-role="vues-tr" class="vues-tr"></span>
+            <label><input type="checkbox" data-option-tr="y" checked /> y</label>
+            <label><input type="checkbox" data-option-tr="M" checked /> M</label>
+            <label><input type="checkbox" data-option-tr="V" /> V</label>
+            <label><input type="checkbox" data-option-tr="p" checked /> <span>p, p<sub>f</sub></span></label>
+          </div>
+          <div class="dessin" data-role="dessin-tr"></div>
         </div>
 
         <div data-role="verdicts"></div>

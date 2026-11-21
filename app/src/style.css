@@ -806,3 +806,33 @@ svg .diagramme { fill: var(--accent); fill-opacity: 0.18; stroke: var(--accent);
 svg .diagramme-p { fill: var(--compression); stroke: var(--compression); }
 svg .pf { fill: none; stroke: var(--alerte); stroke-width: 1; stroke-dasharray: 5 3; }
 svg .extreme { fill: var(--texte); }
+
+/* --- Onglet Transversal : onglets, tableau de sol, vues ----------------- */
+
+[data-mode-seul][hidden] { display: none !important; }
+.onglets { display: flex; gap: 0.3rem; margin: 0 0 0.8rem; }
+.onglets button[aria-pressed='true'],
+.vues-tr button[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.vues-tr { display: inline-flex; flex-wrap: wrap; gap: 0.25rem; }
+.trois { display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, 4.2rem); gap: 0.25rem; align-items: center; margin: 0.25rem 0; }
+.trois span { color: var(--texte-doux); }
+.trois b { font-size: 0.75rem; font-weight: 600; color: var(--texte-faible); text-align: right; }
+.trois input { text-align: right; min-width: 0; }
+.defile { overflow-x: auto; }
+table.sol { border-collapse: collapse; font-size: 0.82rem; }
+table.sol th { font-weight: 600; color: var(--texte-faible); text-align: left; padding: 0.15rem 0.2rem; white-space: nowrap; }
+table.sol th.n { text-align: right; }
+table.sol td { padding: 0.1rem 0.15rem; }
+table.sol td input { width: 3.4rem; text-align: right; padding: 0.1rem 0.3rem; }
+table.sol td input.nom { width: 6rem; text-align: left; }
+table.sol td select { width: auto; padding: 0.1rem 0.2rem; }
+table.sol td.grise { color: var(--texte-faible); text-align: right; }
+table.tableau-tr { border-collapse: collapse; font-size: 0.82rem; width: 100%; }
+table.tableau-tr th { font-weight: 600; color: var(--texte-faible); text-align: right; padding: 0.15rem 0.4rem; border-bottom: 1px solid var(--bordure); }
+table.tableau-tr th:first-child, table.tableau-tr td:first-child { text-align: left; }
+table.tableau-tr td { padding: 0.12rem 0.4rem; border-bottom: 1px solid var(--bordure-douce); }
+table.tableau-tr td.n { text-align: right; font-variant-numeric: tabular-nums; }
+.verdict .clause { float: right; font-weight: 400; font-size: 0.75rem; color: var(--texte-faible); }
+.outils { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
+.outils label { justify-content: flex-start; gap: 0.3rem; margin: 0; }
+.trois input[type='text'] { width: 100%; }

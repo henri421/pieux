@@ -1,6 +1,7 @@
 /** Presentation du resultat : cartes de verification, volets, couches. Mise en forme pure : aucun calcul. */
 
-import { type BlocResultat, echapper, type LigneResultat, nombreAffiche, notationHtml, tauxAffiche } from 'aedificium-ui';
+import { type BlocResultat, echapper, type ElementNote, type LigneResultat, type NoteDeCalcul, nombreAffiche, notationHtml, tauxAffiche } from 'aedificium-ui';
+import type { ResultatTransversal } from '../../src/transversal';
 import type { Calcul, Resultat, Saisie } from './form';
 import { phrase, textes } from './textes';
 
@@ -290,9 +291,9 @@ export const couchesHtml = (s: Saisie): string => {
       champ(`P${p + 1}`, decimal(`data-qs="${i}:${p}"`, couche.qs[p])),
     ).join('');
     return `<fieldset class="couche"><legend>${echapper(d.resultats.couche)} ${i + 1}</legend>` +
-      champ(echapper(d.resultats.nom), `<input type="text" data-couche="${i}" data-champ="nom" value="${echapper(couche.nom)}">`) +
-      champ(echapper(d.refus.champs.h), decimal(`data-couche="${i}" data-champ="h"`, couche.h)) +
-      champ(sym('τ_dd'), decimal(`data-couche="${i}" data-champ="tauDd"`, couche.tauDd)) +
+      champ(echapper(d.resultats.nom), `<input type="text" data-couche="${i}" data-sous="nom" value="${echapper(couche.nom)}">`) +
+      champ(echapper(d.refus.champs.h), decimal(`data-couche="${i}" data-sous="h"`, couche.h)) +
+      champ(sym('τ_dd'), decimal(`data-couche="${i}" data-sous="tauDd"`, couche.tauDd)) +
       `<div class="ligne-profils"><span>${sym('q_s')}</span><div class="profils-saisie">${valeurs}</div></div>` +
       `<button type="button" data-action="retirer-couche" data-couche="${i}">−</button>` +
       `</fieldset>`;
@@ -310,3 +311,109 @@ export const couchesHtml = (s: Saisie): string => {
 
 export const messageDErreur = (e: unknown): string =>
   e instanceof Error ? e.message : String(e);
+
+// ---------------------------------------------------------------------------------------------
+// Onglet Transversal
+// ---------------------------------------------------------------------------------------------
+
+/** Tableau de sol du transversal : noms et épaisseurs communs avec l'axial. */
+export const couchesTrHtml = (s: Saisie): string => {
+  const d = textes();
+  const e = d.tr.entrees;
+  const dec = (i: number, k: string, v: string): string =>
+    `<td><input type="text" inputmode="decimal" data-couche="${i}" data-sous="${k}" value="${brut(v)}"></td>`;
+  const grise = '<td class="grise">—</td>';
+  const options = (valeurs: Record<string, string>, courant: string): string =>
+    Object.entries(valeurs).map(([k, l]) => `<option value="${k}"${k === courant ? ' selected' : ''}>${echapper(l)}</option>`).join('');
+  const lignes = s.couches.map((c, i) => {
+    const draine = c.comportement !== 'non-draine';
+    return `<tr data-couche-tr="${i}">` +
+      `<td><input type="text" class="nom" data-couche="${i}" data-sous="nom" value="${echapper(c.nom)}"></td>` +
+      dec(i, 'h', c.h) +
+      `<td><select data-couche="${i}" data-sous="comportement">${options(e.comportement, c.comportement)}</select></td>` +
+      dec(i, 'gamma', c.gamma) + dec(i, 'gammaSat', c.gammaSat) +
+      (draine ? dec(i, 'phi', c.phi) + dec(i, 'c', c.c) + grise : grise + grise + dec(i, 'cu', c.cu)) +
+      `<td><select data-couche="${i}" data-sous="yf">${options(e.yf, c.yf)}</select></td>` +
+      `<td><button type="button" data-action="retirer-couche" data-couche="${i}">−</button></td></tr>`;
+  }).join('');
+  const th = (h: string, n = true) => `<th${n ? ' class="n"' : ''}>${h}</th>`;
+  return `<div class="defile"><table class="sol"><thead><tr>${th(echapper(d.resultats.couche), false)}${th('h (m)')}` +
+    `${th('', false)}${th(sym('γ'))}${th(sym('γ_sat'))}${th('φ′ (°)')}${th('c′ (kPa)')}${th(`${sym('c_u')} (kPa)`)}${th(`${sym('y_f')} (C.11)`, false)}<th></th></tr></thead>` +
+    `<tbody>${lignes}</tbody></table></div>`;
+};
+
+/** Cartes de l'onglet Transversal : résistance par combinaison, efforts, plastification, service. */
+export const verdictsTrHtml = (r: ResultatTransversal, MRd: number | null): string => {
+  const t = textes().tr;
+  const n = t.note;
+  const v = t.vue;
+  const carte = (titre: string, clause: string, corps: string, controle: number | null, gouv = false): string => {
+    const classes = ['verdict', controle === null ? 'constat' : controle > 1 ? 'depasse' : 'ok'];
+    const badge = gouv ? ` <span class="badge">${textes().vue.gouvernant}</span>` : '';
+    const barre = controle === null ? '' : `${jauge(controle)}<span class="taux">${taux(controle)}</span>`;
+    return `<div class="${classes.join(' ')}" data-verification-tr><h3>${titre}${badge} <span class="clause">${texte(clause)}</span></h3>${barre}<p>${corps}</p></div>`;
+  };
+  let html = `<div class="groupe">${echapper(v.resistance)}</div>`;
+  for (const k of r.combinaisons) {
+    const corps = k.py === null
+      ? texte(v.sansEquilibre)
+      : texte(v.resistanceCorps(aff(k.Hd, 1), aff(k.resistance.H, 0)));
+    html += carte(texte(n.verification(k.nom)), n.clauseTr[r.generation], corps, k.taux,
+      r.combinaisons.length > 1 && k.nom === r.gouvernant.combinaison);
+  }
+  html += `<div class="groupe">${echapper(v.efforts)}</div>`;
+  const m = r.MEd;
+  const corpsM = m.combinaison === ''
+    ? texte(v.sansEquilibre)
+    : texte(v.effortsCorps(aff(m.valeur, 1), aff(m.z, 2), m.combinaison, aff(r.VEd, 1))) + (MRd === null ? ` ${texte(v.sansMRd)}` : ` ${sym('M_Rd')} = ${aff(MRd, 1)} kN·m.`);
+  html += carte(texte(MRd === null ? v.moment : n.verificationM), MRd === null ? 'C.13.1' : n.clauseM, corpsM, r.tauxStructure);
+  let plast = { l: 0, nom: '' };
+  for (const k of r.combinaisons) if (k.py !== null && k.py.zonePlastique >= plast.l) plast = { l: k.py.zonePlastique, nom: k.nom };
+  if (plast.nom !== '') html += carte(echapper(v.plastification), 'C.12', texte(v.plastificationCorps(aff(plast.l, 2), plast.nom)), null);
+  html += `<div class="groupe">${echapper(v.service)}</div>`;
+  const s = r.service;
+  html += carte(echapper(v.service), v.ELS, s === null ? texte(v.serviceSans) : texte(v.serviceCorps(aff(s.yTete * 1000, 1), aff(s.rotationTete * 1000, 2))), null);
+  if (r.alertes.length > 0) {
+    const items = r.alertes.map((a) => `<li>${texte(a)}</li>`).join('');
+    html += `<div class="alertes"><h3>${echapper(textes().vue.alertes)}</h3><ul>${items}</ul></div>`;
+  }
+  return html;
+};
+
+/** Volets de l'onglet Transversal : tableaux de la note, coefficients, hypothèses. */
+export const voletsTrHtml = (note: NoteDeCalcul): string => {
+  const d = textes();
+  const tableaux = (note.sections.calculs ?? []).filter((e): e is Extract<ElementNote, { type: 'tableau' }> => e.type === 'tableau');
+  const tableau = (e: Extract<ElementNote, { type: 'tableau' }>): string =>
+    `<section class="volet"><h3>${texte(e.titre ?? '')}</h3><div class="defile"><table class="tableau-tr"><thead><tr>` +
+    e.entetes.map((h) => `<th>${texte(h)}</th>`).join('') + '</tr></thead><tbody>' +
+    e.lignes.map((l) => `<tr>${l.map((x, j) => `<td${j === 0 ? '' : ' class="n"'}>${texte(x)}</td>`).join('')}</tr>`).join('') +
+    '</tbody></table></div></section>';
+  const coefficients = (note.sections.combinaisons ?? []).flatMap((e) => (e.type === 'bloc' ? [e.bloc] : [])).map((b) =>
+    `<div class="coefficients"><b>${texte(b.titre)}</b>` +
+    b.lignes.map((l) => `<div class="coefficient"><span>${texte(l.symbole)} = ${echapper(l.valeur)}</span><span class="source">${texte(l.libelle)}</span></div>`).join('') + '</div>',
+  ).join('');
+  const hypotheses = d.tr.note.hypotheses.map((h) => `<li>${texte(h)}</li>`).join('');
+  return tableaux.map(tableau).join('') +
+    `<section class="volet"><h3>${echapper(d.resultats.coefficients)}</h3>${coefficients}</section>` +
+    `<section class="volet"><h3>${echapper(d.resultats.hypotheses)}</h3><ul class="hypotheses">${hypotheses}</ul></section>`;
+};
+
+/** Blocs de la note (entrées et tableaux) pour le CSV. */
+export const blocsCsvTr = (note: NoteDeCalcul): BlocResultat[] => {
+  const blocs: BlocResultat[] = [];
+  for (const sec of Object.values(note.sections)) {
+    for (const e of sec) {
+      if (e.type === 'bloc') blocs.push(e.bloc);
+      if (e.type === 'tableau') {
+        blocs.push({
+          titre: e.titre ?? '',
+          note: null,
+          lignes: e.lignes.map((l) => ligne(l[0], e.entetes.slice(1).map((h, j) => `${h} ${l[j + 1]}`).join(' ; '), '')),
+        });
+      }
+    }
+  }
+  blocs.push({ titre: textes().tr.note.verificationM, note: null, lignes: note.verifications.map((v) => ligne(v.nom, v.clause ?? "", v.taux === null ? "" : tauxAffiche(v.taux))) });
+  return blocs;
+};

@@ -27,10 +27,10 @@
       <h1>Pieux</h1>
       <p class="sous-titre">
         Portance axiale d’un pieu et d’un groupe sous semelle rigide, frottement négatif et tassement simple
-        (EN 1997), en 1<sup>re</sup> ou 2<sup>e</sup> génération.
+        (EN 1997), en 1<sup>re</sup> ou 2<sup>e</sup> génération. Onglet Transversal : pieu isolé sous effort horizontal, ressorts p-y de l’EN 1997-3 (C.12).
       </p>
       <p class="avertissement">
-        Non traités : effort transversal, radier sur pieux, chargement cyclique, méthodes CPT ou pressiométrique
+        Non traités : effet de groupe sous charge transversale, radier sur pieux, chargement cyclique, méthodes CPT ou pressiométrique
         (q<sub>b</sub> et q<sub>s</sub> sont saisis), résistance structurale du fût (à vérifier par ailleurs,
         efforts rendus).
       </p>
@@ -41,9 +41,15 @@
         <form id="formulaire" autocomplete="off" novalidate>
           <p data-role="erreur" class="erreur" role="alert" hidden></p>
 
+          <input type="hidden" data-champ="mode" />
+          <div class="onglets" role="group">
+            <button type="button" data-mode="axial">Axial</button>
+            <button type="button" data-mode="transversal">Transversal</button>
+          </div>
+
           <fieldset>
             <legend>Pieu</legend>
-            <label class="ligne">
+            <label class="ligne" data-mode-seul="axial">
               <span>Mode d’exécution</span>
               <select data-champ="execution">
                 <option value="fore">Foré</option>
@@ -57,9 +63,25 @@
               <span>Diamètre D (m)</span>
               <input type="text" inputmode="decimal" data-champ="D" />
             </label>
+            <label class="ligne" data-mode-seul="transversal">
+              <span>Rigidité EI (kN·m²)</span>
+              <input type="text" inputmode="decimal" data-champ="EI" />
+            </label>
+            <p class="source" data-mode-seul="transversal">Béton C30/37 non fissuré, D = 0,6 m : EI = 30 GPa × π·D⁴/64 ≈ 190 852 kN·m². Saisie libre (fissuration, tube acier…).</p>
+            <label class="ligne" data-mode-seul="transversal">
+              <span>Tête</span>
+              <select data-champ="tete">
+                <option value="libre">Libre</option>
+                <option value="encastree">Encastrée (rotation nulle)</option>
+              </select>
+            </label>
+            <label class="ligne" data-mode-seul="transversal">
+              <span>M<sub>Rd</sub> du pieu (kN·m), facultatif</span>
+              <input type="text" inputmode="decimal" data-champ="MRd" placeholder="aucun" />
+            </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Groupe sous semelle rigide</legend>
             <label class="ligne">
               <span>Files selon x</span>
@@ -93,7 +115,7 @@
             </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Sol et résistances (kPa)</legend>
             <div class="boutons">
               <button type="button" data-action="ajouter-profil">+ profil</button>
@@ -106,7 +128,7 @@
             </div>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Efforts sur la semelle</legend>
             <label class="ligne">
               <span>V<sub>G</sub> (kN)</span>
@@ -126,7 +148,7 @@
             </label>
           </fieldset>
 
-          <fieldset>
+          <fieldset data-mode-seul="axial">
             <legend>Service</legend>
             <label class="ligne">
               <span>Module équivalent à la pointe E<sub>eq</sub> (MPa)</span>
@@ -144,6 +166,32 @@
               <span>Tassement admissible (mm)</span>
               <input type="text" inputmode="decimal" data-champ="sAdm" />
             </label>
+          </fieldset>
+
+          <fieldset data-mode-seul="transversal">
+            <legend>Charges en tête, par pieu</legend>
+            <div class="trois"><span></span><b>G</b><b>Q</b></div>
+            <div class="trois"><span>H (kN)</span><input type="text" inputmode="decimal" data-champ="HtG" /><input type="text" inputmode="decimal" data-champ="HtQ" /></div>
+            <div class="trois"><span>M (kN·m)</span><input type="text" inputmode="decimal" data-champ="MtG" /><input type="text" inputmode="decimal" data-champ="MtQ" /></div>
+            <div class="trois"><span>N compression (kN)</span><input type="text" inputmode="decimal" data-champ="NtG" /><input type="text" inputmode="decimal" data-champ="NtQ" /></div>
+            <p class="source">M positif : même sens que H appliqué au-dessus de la tête. L’effort normal compte dans l’équation de flexion (N·y″, C.21).</p>
+          </fieldset>
+
+          <fieldset data-mode-seul="transversal">
+            <legend>Sol pour le transversal</legend>
+            <label class="ligne">
+              <span>Nappe sous la tête (m)</span>
+              <input type="text" inputmode="decimal" data-champ="zNappe" />
+            </label>
+            <div data-role="couches-tr"></div>
+            <div class="boutons">
+              <button type="button" data-action="ajouter-couche">+ couche</button>
+            </div>
+            <label class="coche">
+              <input type="checkbox" data-champ="fluage" />
+              Sol très visqueux (fluage) : p<sub>f</sub> = 6·c<sub>u</sub> (C.17) au lieu de 9·c<sub>u</sub>
+            </label>
+            <p class="source">Noms et épaisseurs communs avec l’onglet Axial. Non drainé : p<sub>f</sub> = min(9·c<sub>u</sub> ; c<sub>u</sub>(2 + (2/3)z/D) + σ′<sub>v</sub>) (C.16, C.18). Drainé : p<sub>f</sub> = K<sub>q</sub>σ′<sub>v</sub> + K<sub>c</sub>c′ (C.19), Brinch Hansen.</p>
           </fieldset>
 
           <fieldset>
@@ -290,7 +338,7 @@
           </p>
         </div>
 
-        <div class="visuels" aria-label="Coupe">
+        <div class="visuels" data-mode-seul="axial" aria-label="Coupe">
           <div class="outils">
             <span class="titre">Coupe</span>
             <label><input type="checkbox" data-option="cotes" checked /> cotes</label>
@@ -298,6 +346,18 @@
             <label><input type="checkbox" data-option="planNeutre" checked /> plan neutre</label>
           </div>
           <div class="dessin" data-role="coupe"></div>
+        </div>
+
+        <div class="visuels" data-mode-seul="transversal" aria-label="Diagrammes du pieu sous charge transversale">
+          <div class="outils">
+            <span class="titre">Diagrammes</span>
+            <span data-role="vues-tr" class="vues-tr"></span>
+            <label><input type="checkbox" data-option-tr="y" checked /> y</label>
+            <label><input type="checkbox" data-option-tr="M" checked /> M</label>
+            <label><input type="checkbox" data-option-tr="V" /> V</label>
+            <label><input type="checkbox" data-option-tr="p" checked /> <span>p, p<sub>f</sub></span></label>
+          </div>
+          <div class="dessin" data-role="dessin-tr"></div>
         </div>
 
         <div data-role="verdicts"></div>
